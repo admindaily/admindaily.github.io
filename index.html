@@ -60,8 +60,7 @@
     </script>
     
     <!-- Google AdSense Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9651439714273887"
-     crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9651439714273887" crossorigin="anonymous"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -654,7 +653,7 @@
         function downloadSurahAudio(number, name) {
             closeModal();
             const paddedNum = number.toString().padStart(3, '0');
-            const audioUrl = `https://everyayah.com/data/Alafasy_128kbps/${paddedNum}.mp3`;
+            const audioUrl = `https://www.quranicaudio.com/quran/7/${paddedNum}.mp3`;
             
             const a = document.createElement('a');
             a.href = audioUrl;
@@ -670,7 +669,7 @@
         // Direct Audio Download
         function downloadAudio(number, name) {
             const paddedNum = number.toString().padStart(3, '0');
-            const audioUrl = `https://everyayah.com/data/Alafasy_128kbps/${paddedNum}.mp3`;
+            const audioUrl = `https://www.mp3quran.net/ar/omran_128kbps/${paddedNum}.mp3`;
             
             const a = document.createElement('a');
             a.href = audioUrl;
@@ -689,8 +688,38 @@
             let content = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
             content += `<h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>`;
             content += `<div class="meaning-text"><p><strong>Type:</strong> ${surah.type}</p><p><strong>Verses:</strong> ${surah.verses}</p></div>`;
-            content += `<div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;"><p><strong>Tafsir:</strong> Surah ${name} is a ${surah.type.toLowerCase()} chapter revealed to Prophet Muhammad (peace be upon him). It contains ${surah.verses} verses and provides guidance on faith, worship, and morality.</p></div>`;
+            content += `<div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;"><p><strong>Tafsir:</strong> Loading tafsir from quran.com...</p></div>`;
             showModal(`Tafsir - Surah ${name}`, content);
+            
+            // Fetch real tafsir from API
+            fetch(`https://api.quran.com/api/v4/tafsirs/20?chapter_number=${number}`)
+                .then(response => response.json())
+                .then(data => {
+                    let tafsirContent = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
+                    tafsirContent += `<h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>`;
+                    tafsirContent += `<div class="meaning-text"><p><strong>Type:</strong> ${surah.type}</p><p><strong>Verses:</strong> ${surah.verses}</p></div>`;
+                    
+                    if (data.tafsirs && data.tafsirs.length > 0) {
+                        // Show first few verses of tafsir
+                        let tafsirText = '';
+                        for(let i=0; i<Math.min(3, data.tafsirs.length); i++) {
+                            tafsirText += `<p style="margin-bottom:15px;"><strong>Verse ${data.tafsirs[i].verse_key}:</strong> ${data.tafsirs[i].text.substring(0, 500)}...</p>`;
+                        }
+                        tafsirContent += `<div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;">${tafsirText}</div>`;
+                    } else {
+                        tafsirContent += `<div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;"><p><strong>Tafsir:</strong> Surah ${name} is a ${surah.type.toLowerCase()} chapter revealed to Prophet Muhammad (peace be upon him). It contains ${surah.verses} verses and provides guidance on faith, worship, and morality.</p></div>`;
+                    }
+                    document.getElementById('modalBody').innerHTML = tafsirContent;
+                })
+                .catch(error => {
+                    console.log('Tafsir fetch error:', error);
+                    document.getElementById('modalBody').innerHTML = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                        <h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>
+                        <div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;">
+                            <p><strong>Tafsir:</strong> Surah ${name} is a ${surah.type.toLowerCase()} chapter revealed to Prophet Muhammad (peace be upon him). It contains ${surah.verses} verses and provides guidance on faith, worship, and morality.</p>
+                            <p style="margin-top:10px;"><a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full tafsir on Quran.com</a></p>
+                        </div>`;
+                });
         }
 
         // View Translation
@@ -698,9 +727,39 @@
             const surah = surahs[number - 1];
             let content = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
             content += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
-            content += `<div style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;"><p>In the name of Allah, the Most Merciful, the Most Compassionate. Praise be to Allah, Lord of the Worlds. The Most Merciful, the Most Compassionate. Master of the Day of Judgment. It is You we worship and You we ask for help. Guide us to the Straight Path.</p></div>`;
-            content += `<p style="margin-top:15px;color:var(--text-secondary);"><em>Note: This shows a sample. Download the full surah for complete translation.</em></p>`;
+            content += `<div id="translationContent" style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;"><p>Loading translation from quran.com...</p></div>`;
             showModal(`Translation - Surah ${name}`, content);
+            
+            // Fetch real translation from API (translation ID 20 is English)
+            fetch(`https://api.quran.com/api/v4/quran/translations/20?chapter_number=${number}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.translations && data.translations.length > 0) {
+                        let transContent = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
+                        transContent += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
+                        
+                        // Show first 5 verses of translation
+                        let verseList = '<div style="max-height:400px;overflow-y:auto;">';
+                        for(let i=0; i<Math.min(5, data.translations.length); i++) {
+                            verseList += `<p style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;"><strong>${data.translations[i].verse_key}:</strong> ${data.translations[i].text}</p>`;
+                        }
+                        verseList += '</div>';
+                        if (data.translations.length > 5) {
+                            verseList += `<p style="margin-top:15px;color:var(--text-secondary);"><em>And more ${data.translations.length - 5} verses...</em></p>`;
+                        }
+                        transContent += verseList;
+                        document.getElementById('modalBody').innerHTML = transContent;
+                    }
+                })
+                .catch(error => {
+                    console.log('Translation fetch error:', error);
+                    document.getElementById('modalBody').innerHTML = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                        <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
+                        <div style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;">
+                            <p>In the name of Allah, the Most Merciful, the Most Compassionate. Praise be to Allah, Lord of the Worlds. The Most Merciful, the Most Compassionate. Master of the Day of Judgment. It is You we worship and You we ask for help. Guide us to the Straight Path.</p>
+                        </div>
+                        <p style="margin-top:15px;color:var(--text-secondary);"><em>Note: Showing sample. <a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full translation on Quran.com</a></em></p>`;
+                });
         }
 
         // View Meaning
@@ -750,7 +809,7 @@
 
         function downloadFullQuranPdf() {
             closeModal();
-            window.open('https://www.pdfquran.com/', '_blank');
+            window.open('https://www.mp3quran.net/ar/omran/', '_blank');
             alert('Opening PDF Quran download...');
         }
 
@@ -762,7 +821,7 @@
                     setTimeout(() => {
                         const paddedNum = surah.number.toString().padStart(3, '0');
                         const a = document.createElement('a');
-                        a.href = `https://everyayah.com/data/Alafasy_128kbps/${paddedNum}.mp3`;
+                        a.href = `https://www.mp3quran.net/ar/omran_128kbps/${paddedNum}.mp3`;
                         a.download = `Surah_${surah.number}_${surah.name.replace(/\s+/g, '_')}.mp3`;
                         a.target = '_blank';
                         document.body.appendChild(a);
@@ -830,12 +889,13 @@
 
         function playSurah(number, name) {
             currentSurahNumber = number;
-            // Using everyayah.com - reliable audio source
             const paddedNum = number.toString().padStart(3, '0');
-            const audioUrl = `https://everyayah.com/data/Alafasy_128kbps/${paddedNum}.mp3`;
+            
+            // Using surahquran.com - reliable Quran audio source
+            const audioUrl = `https://surahquran.com/mp3/Alsudaes/${paddedNum}.mp3`;
             
             document.getElementById('audioPlayerTitle').textContent = `Surah ${name}`;
-            document.getElementById('audioPlayerSubtitle').textContent = 'Sheikh Mahmoud Al-Husary';
+            document.getElementById('audioPlayerSubtitle').textContent = 'Sheikh Abdulrahman Al-Sudais';
             document.getElementById('audioPlayerBar').classList.add('active');
             document.body.classList.add('audio-player-active');
             
@@ -846,7 +906,6 @@
             audioPlayer.src = audioUrl;
             audioPlayer.volume = document.getElementById('volumeSlider').value / 100;
             
-            // Handle play promise - fallback to new tab if streaming fails
             const playPromise = audioPlayer.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
@@ -855,11 +914,50 @@
                     document.getElementById('playPauseIcon').classList.add('fa-pause');
                     updateEqualizer();
                 }).catch(error => {
-                    console.log('Streaming failed, opening in new tab:', error);
-                    // Fallback: open in new tab
+                    console.log('Play failed, opening in new tab');
                     window.open(audioUrl, '_blank');
                 });
             }
+        }
+        
+        function tryAudioSource(sources, index, name) {
+            if (index >= sources.length) {
+                // All sources failed - try opening in new tab as last resort
+                const paddedNum = currentSurahNumber.toString().padStart(3, '0');
+                const fallbackUrl = `https://surahquran.com/mp3/Alsudaes/${paddedNum}.mp3`;
+                window.open(fallbackUrl, '_blank');
+                showAudioError('Audio unavailable. Opened in new tab.');
+                return;
+            }
+            
+            audioPlayer.src = sources[index];
+            audioPlayer.volume = document.getElementById('volumeSlider').value / 100;
+            
+            const playPromise = audioPlayer.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    isPlaying = true;
+                    document.getElementById('playPauseIcon').classList.remove('fa-play');
+                    document.getElementById('playPauseIcon').classList.add('fa-pause');
+                    document.getElementById('audioPlayerSubtitle').textContent = 'Sheikh Omar Al-Omran';
+                    document.getElementById('audioPlayerSubtitle').style.color = '';
+                    updateEqualizer();
+                }).catch(error => {
+                    console.log(`Source ${index + 1} failed (${sources[index]}), trying next...`);
+                    tryAudioSource(sources, index + 1, name);
+                });
+            }
+        }
+        
+        function showAudioError(message) {
+            isPlaying = false;
+            document.getElementById('playPauseIcon').classList.remove('fa-pause');
+            document.getElementById('playPauseIcon').classList.add('fa-play');
+            document.getElementById('totalTime').textContent = 'Error';
+            document.getElementById('audioEqualizer').classList.add('paused');
+            // Show error in a user-friendly way
+            document.getElementById('audioPlayerSubtitle').textContent = message;
+            document.getElementById('audioPlayerSubtitle').style.color = '#ff6b6b';
         }
 
         function togglePlayPause() {
@@ -903,6 +1001,8 @@
             isPlaying = false;
             document.getElementById('audioPlayerBar').classList.remove('active');
             document.body.classList.remove('audio-player-active');
+            // Reset subtitle styling
+            document.getElementById('audioPlayerSubtitle').style.color = '';
         }
 
         function onAudioEnded() {
@@ -948,6 +1048,9 @@
             document.getElementById('playPauseIcon').classList.add('fa-play');
             document.getElementById('totalTime').textContent = 'Error';
             document.getElementById('audioEqualizer').classList.add('paused');
+            // Show user-friendly error message
+            document.getElementById('audioPlayerSubtitle').textContent = 'Unable to play audio. Check internet connection.';
+            document.getElementById('audioPlayerSubtitle').style.color = '#ff6b6b';
         }
         let previousVolume = 100;
         function setVolume(value) {
