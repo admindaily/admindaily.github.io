@@ -772,23 +772,13 @@
         function downloadSurahPdf(number, name) {
             closeModal();
             const paddedNum = number.toString().padStart(3, '0');
-            const pdfUrl = `${PDF_BASE}/${paddedNum}.pdf`;
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = pdfUrl;
-            document.body.appendChild(iframe);
-            setTimeout(() => document.body.removeChild(iframe), 5000);
+            window.open(`${PDF_BASE}/${paddedNum}.pdf`, '_blank');
         }
 
         function downloadSurahAudio(number, name) {
             closeModal();
             const paddedNum = number.toString().padStart(3, '0');
-            const audioUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = audioUrl;
-            document.body.appendChild(iframe);
-            setTimeout(() => document.body.removeChild(iframe), 5000);
+            window.open(`${AUDIO_BASE}/${paddedNum}.mp3`, '_blank');
         }
 
         function viewTafsir(number, name) {
@@ -800,7 +790,7 @@
                 <div id="tafsirContent" style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;"><p>Loading tafsir...</p></div>`;
             showModal(`Tafsir - Surah ${name}`, content);
             
-            fetch(`${TAFSIR_API}/${number}?translations=20&tafsirs=en-tafisr-ibn-kathir`)
+            fetch(`${TAFSIR_API}/${number}?translations=20&tafsirs=en-tafsir-ibn-kathir`)
                 .then(response => {
                     if (!response.ok) throw new Error('Tafsir API error');
                     return response.json();
@@ -1088,20 +1078,7 @@
 
         function downloadFullQuranAudio() {
             closeModal();
-            const confirmed = confirm('This will start downloading all 114 surah audio files. Continue?');
-            if (confirmed) {
-                surahs.forEach((surah, index) => {
-                    setTimeout(() => {
-                        const paddedNum = surah.number.toString().padStart(3, '0');
-                        const iframe = document.createElement('iframe');
-                        iframe.style.display = 'none';
-                        iframe.src = `${AUDIO_BASE}/${paddedNum}.mp3`;
-                        document.body.appendChild(iframe);
-                        setTimeout(() => document.body.removeChild(iframe), 5000);
-                    }, index * 500);
-                });
-                alert('Started downloading all 114 surahs! Please allow popups for this site.');
-            }
+            window.open('https://www.mp3quran.net/ar/abdulrahman_al_sudais/', '_blank');
         }
 
         function loadDailyHadith() {
