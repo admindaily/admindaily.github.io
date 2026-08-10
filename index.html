@@ -688,7 +688,7 @@
                     
                     if (verses.length > 0) {
                         let tafsirText = '<div style="max-height:400px;overflow-y:auto;">';
-                        const showCount = Math.min(5, verses.length);
+                        const showCount = verses.length;
                         for (let i = 0; i < showCount; i++) {
                             const v = verses[i];
                             const tafsir = v.tafsirs && v.tafsirs.length > 0 ? v.tafsirs[0].text : '';
@@ -702,9 +702,6 @@
                             tafsirText += `</div>`;
                         }
                         tafsirText += '</div>';
-                        if (verses.length > showCount) {
-                            tafsirText += `<p style="margin-top:15px;color:var(--text-secondary);"><em>Showing first ${showCount} verses. <a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full tafsir on Quran.com</a></em></p>`;
-                        }
                         tafsirContent += `<div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;">${tafsirText}</div>`;
                     } else {
                         tafsirContent += `<div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;"><p><strong>Tafsir:</strong> Surah ${name} is a ${surah.type.toLowerCase()} chapter revealed to Prophet Muhammad (peace be upon him). It contains ${surah.verses} verses and provides guidance on faith, worship, and morality.</p></div>`;
@@ -740,16 +737,13 @@
                         transContent += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
                         
                         let verseList = '<div style="max-height:400px;overflow-y:auto;">';
-                        const showCount = Math.min(5, data.verses.length);
+                        const showCount = data.verses.length;
                         for (let i = 0; i < showCount; i++) {
                             const v = data.verses[i];
                             const translation = v.translations && v.translations.length > 0 ? v.translations[0].text : '';
                             verseList += `<div style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;"><strong style="color:var(--accent);">${v.verse_key}:</strong> ${translation}</div>`;
                         }
                         verseList += '</div>';
-                        if (data.verses.length > showCount) {
-                            verseList += `<p style="margin-top:15px;color:var(--text-secondary);"><em>Showing first ${showCount} verses. <a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full translation on Quran.com</a></em></p>`;
-                        }
                         transContent += verseList;
                         document.getElementById('modalBody').innerHTML = transContent;
                     }
@@ -898,8 +892,6 @@
             document.getElementById('totalTime').textContent = '0:00';
             
             audioPlayer.pause();
-            audioPlayer.removeEventListener('canplay', onAudioCanPlay);
-            audioPlayer.removeEventListener('error', onAudioError);
             audioReady = false;
             
             const attemptPlay = (url) => {
