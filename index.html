@@ -238,7 +238,7 @@
         .surah-name-english { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
         .surah-meaning { font-size: 1rem; color: var(--text-secondary); font-style: italic; }
         
-        .surah-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 20px; }
+        .surah-actions { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 20px; }
         .action-btn { 
             padding: 10px 8px; border: none; border-radius: 8px; font-family: inherit; 
             font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; 
@@ -250,6 +250,7 @@
         .action-btn.translation { background: #5a3d2d; color: var(--text-primary); }
         .action-btn.meaning { background: #2d4a5a; color: var(--text-primary); }
         .action-btn.audio { background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%); color: var(--background); }
+        .action-btn.hadith { background: #5a2d5a; color: var(--text-primary); }
         .action-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
@@ -297,6 +298,7 @@
             .surah-grid { grid-template-columns: 1fr; }
             .surah-actions { grid-template-columns: repeat(3, 1fr); }
             .action-btn.meaning { grid-column: span 3; }
+            .action-btn.hadith { grid-column: span 3; }
             .download-options { grid-template-columns: 1fr; }
             .full-download-options { grid-template-columns: 1fr; }
             .ad-banner { padding: 10px; }
@@ -557,6 +559,7 @@
         const PDF_BASE = 'https://surahquran.com/surah-pdf/pdf';
         const TRANSLATION_API = 'https://api.quran.com/api/v4/verses/by_chapter';
         const TAFSIR_API = 'https://api.islamic.app/v1/verses/by_chapter';
+        const HADITH_API = 'https://ummahapi.com/api/hadith';
 
         function createSurahCard(surah) {
             return `<div class="surah-card">
@@ -584,6 +587,9 @@
                     </button>
                     <button class="action-btn audio" onclick="playSurah(${surah.number}, '${surah.name}')" title="Play Audio - Sheikh Sudais">
                         <i class="fas fa-play"></i><span>Play</span>
+                    </button>
+                    <button class="action-btn hadith" onclick="viewHadith(${surah.number}, '${surah.name}')" title="View Hadiths">
+                        <i class="fas fa-book"></i><span>Hadith</span>
                     </button>
                 </div>
             </div>`;
@@ -811,6 +817,86 @@
                             <p>In the name of Allah, the Most Merciful, the Especially Merciful. Praise be to Allah, Lord of all the worlds.</p>
                         </div>`;
                 });
+        }
+
+        function viewHadith(number, name) {
+            const surah = surahs[number - 1];
+            const content = `
+                <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - Related Hadiths</p>
+                <div id="hadithContent" style="padding:15px;background:rgba(90,45,90,0.2);border-radius:8px;"><p>Loading hadiths...</p></div>`;
+            showModal(`Hadith - Surah ${name}`, content);
+
+            const collections = ['bukhari', 'muslim', 'abudawud', 'tirmidhi', 'ibnmajah'];
+            let hadiths = [];
+
+            const loadHadiths = async () => {
+                try {
+                    const searchPromises = collections.map(col =>
+                        fetch(`${HADITH_API}/search?q=${encodeURIComponent(name)}&collection=${col}`)
+                            .then(r => r.json())
+                            .catch(() => ({ success: false, data: { hadiths: [] } }))
+                    );
+                    const results = await Promise.all(searchPromises);
+                    results.forEach((result, idx) => {
+                        if (result.success && result.data && result.data.hadiths) {
+                            result.data.hadiths.forEach(h => {
+                                hadiths.push({ ...h, collection_label: collections[idx] });
+                            });
+                        }
+                    });
+
+                    if (hadiths.length === 0) {
+                        document.getElementById('modalBody').innerHTML = `
+                            <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                            <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - Related Hadiths</p>
+                            <div style="padding:15px;background:rgba(90,45,90,0.2);border-radius:8px;">
+                                <p>No specific hadiths found directly linked to Surah ${name}.</p>
+                                <p style="margin-top:10px;">Browse authentic hadith collections:</p>
+                                <ul style="margin-top:10px;padding-left:20px;color:var(--text-secondary);">
+                                    <li>Sahih al-Bukhari</li>
+                                    <li>Sahih Muslim</li>
+                                    <li>Sunan Abu Dawud</li>
+                                    <li>Jami at-Tirmidhi</li>
+                                    <li>Sunan Ibn Majah</li>
+                                </ul>
+                            </div>`;
+                        return;
+                    }
+
+                    let hadithContent = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
+                    hadithContent += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${hadiths.length} related hadith(s) found</p>`;
+
+                    hadiths.forEach(hadith => {
+                        const narratorMatch = hadith.english.match(/Narrated ([^:]+):/);
+                        const narrator = narratorMatch ? narratorMatch[1].trim() : 'Unknown';
+                        const text = hadith.english.replace(/Narrated [^:]+: /, '');
+                        const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
+
+                        hadithContent += `<div style="margin-bottom:20px;padding:15px;background:rgba(26,71,42,0.3);border-radius:12px;border-left:4px solid ${gradeColor};">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:5px;">
+                                <span style="color:var(--accent);font-weight:700;font-size:0.9rem;">${hadith.collection_name} #${hadith.hadithnumber}</span>
+                                <span style="background:${gradeColor};color:#fff;padding:2px 10px;border-radius:12px;font-size:0.8rem;font-weight:600;">${hadith.grade}</span>
+                            </div>
+                            <div style="margin-bottom:10px;color:var(--text-secondary);font-size:0.9rem;"><strong>Narrator:</strong> ${narrator}</div>
+                            <div class="arabic-text" style="text-align:right;margin-bottom:10px;font-size:1.1rem;">${hadith.arabic}</div>
+                            <div style="color:var(--text-primary);line-height:1.7;">${text}</div>
+                        </div>`;
+                    });
+
+                    document.getElementById('modalBody').innerHTML = hadithContent;
+                } catch (error) {
+                    console.log('Hadith fetch error:', error);
+                    document.getElementById('modalBody').innerHTML = `
+                        <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                        <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - Related Hadiths</p>
+                        <div style="padding:15px;background:rgba(90,45,90,0.2);border-radius:8px;">
+                            <p>Unable to load hadiths. Please try again later.</p>
+                        </div>`;
+                }
+            };
+
+            loadHadiths();
         }
 
         function showFullQuranOptions() {
