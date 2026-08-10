@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuranHub - Digital Quran Resources</title>
     
-    <!-- SEO Meta Tags -->
     <meta name="description" content="QuranHub - Your comprehensive digital Quran resource. Read, listen, and download all 114 surahs with translations, tafsir, and audio recitations by Sheikh Al-Sudais.">
     <meta name="keywords" content="Quran, QuranHub, Holy Quran, Quran mp3, Quran audio, Quran download, Islamic, Muslim, religion, Surah, tafsir, translation, recitation, Al-Sudais, read Quran online, listen Quran">
     <meta name="author" content="AkramJoesTechnologies">
@@ -14,24 +13,20 @@
     <meta name="revisit-after" content="7 days">
     <meta name="theme-color" content="#1a472a">
     
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://quranhub.example.com/">
     <meta property="og:title" content="QuranHub - Digital Quran Resources">
     <meta property="og:description" content="Read, listen, and download all 114 surahs with translations, tafsir, and audio recitations.">
     <meta property="og:image" content="https://quranhub.example.com/og-image.jpg">
     
-    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://quranhub.example.com/">
     <meta property="twitter:title" content="QuranHub - Digital Quran Resources">
     <meta property="twitter:description" content="Read, listen, and download all 114 surahs with translations, tafsir, and audio recitations.">
     <meta property="twitter:image" content="https://quranhub.example.com/og-image.jpg">
     
-    <!-- Canonical URL -->
     <link rel="canonical" href="https://quranhub.example.com/">
     
-    <!-- Structured Data - Organization -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -44,7 +39,6 @@
     }
     </script>
     
-    <!-- Structured Data - WebSite -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -59,7 +53,6 @@
     }
     </script>
     
-    <!-- Google AdSense Script -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9651439714273887" crossorigin="anonymous"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,9 +67,11 @@
             --background: #0f1f15; --card-bg: #1a2e22; --card-hover: #233d2f;
             --text-primary: #f5f5f5; --text-secondary: #a8c5b5; --border-color: #2d4a38;
         }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Amiri', 'Noto Naskh Arabic', serif;
             background: var(--background); color: var(--text-primary); min-height: 100vh; line-height: 1.6;
+            overflow-x: hidden;
         }
         body::before {
             content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -86,11 +81,10 @@
             pointer-events: none; z-index: -1;
         }
         
-        /* Header */
         header {
-            background: linear-gradient(180deg, rgba(15,31,21,0.98) 0%, rgba(15,31,21,0.95) 100%);
+            background: rgba(15,31,21,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             padding: 1rem 2rem; position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color); transition: all 0.3s ease;
         }
         .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
         .logo { display: flex; align-items: center; gap: 12px; }
@@ -98,11 +92,12 @@
             width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
             font-size: 1.5rem; color: var(--background); font-weight: bold;
+            box-shadow: 0 4px 15px rgba(212,168,83,0.3);
         }
         .logo-text {
             font-size: 1.5rem; font-weight: 700;
             background: linear-gradient(135deg, var(--accent) 0%, #e6bc6a 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
         nav { display: flex; gap: 2rem; align-items: center; }
         nav a { color: var(--text-secondary); text-decoration: none; font-size: 1.1rem; transition: color 0.3s; position: relative; }
@@ -114,9 +109,9 @@
             background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%); color: var(--background);
             padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-family: inherit;
             font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
-            transition: all 0.3s;
+            transition: all 0.3s; box-shadow: 0 4px 15px rgba(212,168,83,0.2);
         }
-        .download-all-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(212,168,83,0.3); }
+        .download-all-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(212,168,83,0.4); }
         
         .theme-toggle {
             background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 50%;
@@ -125,14 +120,18 @@
         }
         .theme-toggle:hover { border-color: var(--accent); color: var(--accent); transform: rotate(15deg); }
         
-        /* Audio Player */
         .audio-player-bar {
-            display: none; position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(26,46,34,0.98) 0%, rgba(15,31,21,0.98) 100%);
-            border-top: 1px solid var(--border-color); padding: 15px 30px; z-index: 3000; backdrop-filter: blur(10px);
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; 
+            background: rgba(26,46,34,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color); padding: 15px 30px; z-index: 3000;
         }
         .audio-player-bar.active { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
         .audio-player-info { display: flex; align-items: center; gap: 15px; flex: 1; min-width: 0; }
-        .audio-player-icon { width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--background); flex-shrink: 0; }
+        .audio-player-icon { 
+            width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%); 
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; color: var(--background); flex-shrink: 0; 
+        }
         .audio-player-details { min-width: 0; }
         .audio-player-title { color: var(--text-primary); font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .audio-player-subtitle { color: var(--text-secondary); font-size: 0.9rem; }
@@ -170,21 +169,25 @@
         @keyframes eq { from { height: 5px; } to { height: 20px; } }
         .audio-equalizer.paused .eq-bar { animation-play-state: paused; }
         
-        /* Light Theme */
         body.light-theme {
             --primary: #2e7d32; --secondary: #4caf50; --background: #f5f5f0; --card-bg: #ffffff; --card-hover: #f0f0e8;
             --text-primary: #1a1a1a; --text-secondary: #555555; --border-color: #ddd;
         }
         body.light-theme .surah-card { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         body.light-theme body::before { display: none; }
-        body.light-theme header { background: linear-gradient(180deg, rgba(245,245,240,0.98) 0%, rgba(245,245,240,0.95) 100%); }
+        body.light-theme header { background: rgba(245,245,240,0.85); }
         body.light-theme .modal-content { box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        body.light-theme .audio-player-bar { background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(245,245,240,0.98) 100%); }
+        body.light-theme .audio-player-bar { background: rgba(255,255,255,0.95); }
         
         main { max-width: 1400px; margin: 0 auto; padding: 120px 2rem 60px; }
         
-        .hero { text-align: center; margin-bottom: 60px; }
-        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero { text-align: center; margin-bottom: 60px; animation: fadeInUp 0.8s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .hero h1 { 
+            font-size: 3.5rem; margin-bottom: 1rem; 
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
         .hero-verse { font-size: 1.4rem; color: var(--text-secondary); font-style: italic; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto; }
         .hero-verse .arabic { font-family: 'Noto Naskh Arabic', 'Amiri', serif; font-size: 1.8rem; display: block; margin-bottom: 1rem; color: var(--accent); }
         
@@ -197,31 +200,37 @@
         .search-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 30px rgba(212,168,83,0.2); }
         .search-icon { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1.2rem; }
         
-        /* Ad Banner Styles */
         .ad-container { margin: 25px 0; text-align: center; }
         .ad-banner {
             background: linear-gradient(135deg, #1a3a2a 0%, #0d1f15 100%);
             border: 1px solid var(--border-color); border-radius: 12px; padding: 15px;
             display: flex; justify-content: center; align-items: center; min-height: 100px;
         }
-        .ad-banner ins {
-            width: 100%; max-width: 728px; min-height: 90px;
-        }
+        .ad-banner ins { width: 100%; max-width: 728px; min-height: 90px; }
         .ad-responsive { width: 100%; }
         
-        /* Surah Grid */
         .surah-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; }
         
         .surah-card {
             background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px;
-            transition: all 0.3s; position: relative; overflow: hidden;
+            transition: all 0.3s ease; position: relative; overflow: hidden;
         }
-        .surah-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), transparent); opacity: 0; transition: opacity 0.3s; }
-        .surah-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(212,168,83,0.1); background: var(--card-hover); }
+        .surah-card::before { 
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; 
+            background: linear-gradient(90deg, var(--accent), transparent); opacity: 0; transition: opacity 0.3s; 
+        }
+        .surah-card:hover { 
+            transform: translateY(-5px); border-color: var(--accent); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(212,168,83,0.1); background: var(--card-hover); 
+        }
         .surah-card:hover::before { opacity: 1; }
         
         .surah-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
-        .surah-number { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; color: var(--accent); border: 2px solid var(--accent); }
+        .surah-number { 
+            width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; 
+            font-size: 1rem; color: var(--accent); border: 2px solid var(--accent); 
+        }
         .surah-type { font-size: 0.85rem; color: var(--text-secondary); padding: 4px 12px; background: rgba(212,168,83,0.1); border-radius: 20px; border: 1px solid rgba(212,168,83,0.3); }
         
         .surah-names { margin-bottom: 16px; }
@@ -230,7 +239,11 @@
         .surah-meaning { font-size: 1rem; color: var(--text-secondary); font-style: italic; }
         
         .surah-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 20px; }
-        .action-btn { padding: 10px 8px; border: none; border-radius: 8px; font-family: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.3s; text-align: center; }
+        .action-btn { 
+            padding: 10px 8px; border: none; border-radius: 8px; font-family: inherit; 
+            font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; 
+            align-items: center; gap: 4px; transition: all 0.3s; text-align: center; 
+        }
         .action-btn i { font-size: 1rem; }
         .action-btn.download { background: var(--primary); color: var(--text-primary); }
         .action-btn.tafsir { background: #3d2d5a; color: var(--text-primary); }
@@ -239,11 +252,14 @@
         .action-btn.audio { background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%); color: var(--background); }
         .action-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
         
-        /* Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
-        .modal-overlay.active { display: flex; }
-        .modal-content { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative; }
-        .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--card-bg); }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content { 
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; 
+            max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative; 
+        }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--card-bg); z-index: 1; }
         .modal-header h3 { font-size: 1.5rem; color: var(--accent); }
         .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; }
         .modal-close:hover { color: var(--accent); }
@@ -252,7 +268,6 @@
         .modal-body .translation-text { font-size: 1.1rem; line-height: 1.8; color: var(--text-primary); }
         .modal-body .meaning-text { font-size: 1rem; color: var(--text-secondary); font-style: italic; margin-top: 15px; padding: 15px; background: rgba(212,168,83,0.1); border-radius: 8px; }
         
-        /* Download Options */
         .download-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
         .download-option { background: var(--primary); border: 2px solid var(--border-color); border-radius: 12px; padding: 25px; cursor: pointer; transition: all 0.3s; text-align: center; }
         .download-option:hover { border-color: var(--accent); transform: translateY(-3px); background: var(--card-hover); }
@@ -262,12 +277,16 @@
         
         .full-download-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
         
-        /* Footer */
         footer { background: var(--card-bg); border-top: 1px solid var(--border-color); padding: 40px 2rem; margin-top: 80px; text-align: center; }
         .footer-text { color: var(--text-secondary); font-size: 1rem; }
         .footer-text i { color: var(--accent); }
         
-        /* Responsive */
+        .skeleton { 
+            background: linear-gradient(90deg, var(--card-bg) 25%, var(--card-hover) 50%, var(--card-bg) 75%); 
+            background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; 
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
         @media (max-width: 1024px) { .surah-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) {
             .header-content { flex-direction: column; gap: 1rem; }
@@ -292,7 +311,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header>
         <div class="header-content">
             <div class="logo"><div class="logo-icon">ق</div><span class="logo-text">QuranHub</span></div>
@@ -311,7 +329,6 @@
     </header>
 
     <main id="home">
-        <!-- Hero Section -->
         <section class="hero">
             <h1>القرآن الكريم</h1>
             <p class="hero-verse">
@@ -321,7 +338,6 @@
             </p>
         </section>
 
-        <!-- Google AdSense - Top Banner -->
         <div class="ad-container">
             <div class="ad-banner">
                 <ins class="adsbygoogle"
@@ -333,13 +349,11 @@
             </div>
         </div>
 
-        <!-- Search -->
         <div class="search-container">
             <i class="fas fa-search search-icon"></i>
             <input type="text" class="search-input" id="searchInput" placeholder="Search surahs by name..." oninput="searchSurahs(this.value)">
         </div>
 
-        <!-- Google AdSense - After Search -->
         <div class="ad-container">
             <ins class="adsbygoogle"
                  style="display:block"
@@ -349,26 +363,24 @@
                  data-full-width-responsive="true"></ins>
         </div>
 
-        <!-- Surahs Grid -->
         <div class="surah-grid" id="surahGrid"></div>
     </main>
 
-    <!-- Audio Player -->
     <div class="audio-player-bar" id="audioPlayerBar">
         <div class="audio-player-info">
-            <div class="audio-player-icon"><i class="fas fa-quran"></i></div>
+            <div class="audio-player-icon"><i class="fas fa-music"></i></div>
             <div class="audio-player-details">
                 <div class="audio-player-title" id="audioPlayerTitle">Surah Al-Fatiha</div>
-                <div class="audio-player-subtitle" id="audioPlayerSubtitle">Sheikh Mahmoud Al-Husary</div>
+                <div class="audio-player-subtitle" id="audioPlayerSubtitle">Sheikh Abdulrahman Al-Sudais</div>
             </div>
             <div class="audio-equalizer paused" id="audioEqualizer">
                 <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
             </div>
         </div>
         <div class="audio-player-controls">
-            <button class="audio-nav-btn" onclick="playPreviousSurah()"><i class="fas fa-step-backward"></i></button>
-            <button class="audio-play-btn" id="audioPlayBtn" onclick="togglePlayPause()"><i class="fas fa-play" id="playPauseIcon"></i></button>
-            <button class="audio-nav-btn" onclick="playNextSurah()"><i class="fas fa-step-forward"></i></button>
+            <button class="audio-nav-btn" onclick="playPreviousSurah()" title="Previous Surah"><i class="fas fa-step-backward"></i></button>
+            <button class="audio-play-btn" id="audioPlayBtn" onclick="togglePlayPause()" title="Play/Pause"><i class="fas fa-play" id="playPauseIcon"></i></button>
+            <button class="audio-nav-btn" onclick="playNextSurah()" title="Next Surah"><i class="fas fa-step-forward"></i></button>
             <div class="audio-progress">
                 <span class="audio-time" id="currentTime">0:00</span>
                 <div class="progress-bar" onclick="seekAudio(event)">
@@ -382,12 +394,11 @@
                 <button class="volume-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="volumeIcon"></i></button>
                 <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100" onchange="setVolume(this.value)">
             </div>
-            <button class="audio-close-btn" onclick="closeAudioPlayer()"><i class="fas fa-times"></i></button>
+            <button class="audio-close-btn" onclick="closeAudioPlayer()" title="Close Player"><i class="fas fa-times"></i></button>
         </div>
     </div>
-    <audio id="audioPlayer" crossorigin="anonymous" onended="onAudioEnded()" ontimeupdate="updateProgress()" onloadedmetadata="updateDuration()" onerror="audioError()"></audio>
+    <audio id="audioPlayer" onended="onAudioEnded()" ontimeupdate="updateProgress()" onloadedmetadata="updateDuration()" onerror="audioError()"></audio>
 
-    <!-- Footer -->
     <div class="ad-container">
         <ins class="adsbygoogle"
              style="display:block"
@@ -397,7 +408,6 @@
              data-full-width-responsive="true"></ins>
     </div>
 
-    <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -405,7 +415,6 @@
                 <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" id="modalBody"></div>
-            <!-- Google AdSense - Inside Modal -->
             <div style="padding: 0 20px 20px;">
                 <ins class="adsbygoogle"
                      style="display:block"
@@ -417,7 +426,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer id="about">
         <div class="footer-content">
             <p class="footer-text"><i class="fas fa-heart"></i> QuranHub - Your Digital Quran Resource</p>
@@ -427,7 +435,6 @@
     </footer>
 
     <script>
-        // Quran Surahs Data
         const surahs = [
             { number: 1, name: "Al-Fatiha", nameArabic: "الفاتحة", meaning: "The Opening", type: "Meccan", verses: 7 },
             { number: 2, name: "Al-Baqarah", nameArabic: "البقرة", meaning: "The Cow", type: "Medinan", verses: 286 },
@@ -545,7 +552,10 @@
             { number: 114, name: "An-Nas", nameArabic: "الناس", meaning: "Mankind", type: "Meccan", verses: 6 }
         ];
 
-        // Create Surah Card HTML
+        const AUDIO_BASE = 'https://cdn.islamic.network/quran/audio-surah/128/ar.sudaisshuraymnaeemsultan';
+        const TRANSLATION_API = 'https://api.quran.com/api/v4/verses/by_chapter';
+        const TAFSIR_API = 'https://api.islamic.app/v1/verses/by_chapter';
+
         function createSurahCard(surah) {
             return `<div class="surah-card">
                 <div class="surah-header">
@@ -577,7 +587,6 @@
             </div>`;
         }
 
-        // Render Surahs
         function renderSurahs(surahList) {
             const grid = document.getElementById('surahGrid');
             if (surahList.length === 0) {
@@ -587,7 +596,6 @@
             grid.innerHTML = surahList.map(createSurahCard).join('');
         }
 
-        // Search Function
         function searchSurahs(query) {
             const searchTerm = query.toLowerCase().trim();
             if (searchTerm === '') { renderSurahs(surahs); return; }
@@ -600,19 +608,16 @@
             renderSurahs(filtered);
         }
 
-        // Modal Functions
         function showModal(title, content) { 
             document.getElementById('modalTitle').textContent = title; 
             document.getElementById('modalBody').innerHTML = content; 
             document.getElementById('modalOverlay').classList.add('active'); 
-            // Load ads in modal
             (adsbygoogle = window.adsbygoogle || []).push({});
         }
         function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
         document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
 
-        // Download Options Modal
         function showDownloadOptions(number, name) {
             const surah = surahs[number - 1];
             const content = `
@@ -642,68 +647,62 @@
             showModal(`Download Surah ${name}`, content);
         }
 
-        // Download PDF
         function downloadSurahPdf(number, name) {
             closeModal();
             window.open('https://www.pdfquran.com/', '_blank');
-            alert(`📄 Opening PDF download for Surah ${name}...\n\nAlso opening pdfquran.com for full PDF.`);
         }
 
-        // Download Audio
         function downloadSurahAudio(number, name) {
             closeModal();
             const paddedNum = number.toString().padStart(3, '0');
-            const audioUrl = `https://www.quranicaudio.com/quran/7/${paddedNum}.mp3`;
-            
-            const a = document.createElement('a');
-            a.href = audioUrl;
-            a.download = `Surah_${name.replace(/\s+/g, '_')}_Sheikh_Al-Husary.mp3`;
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            alert(`🎧 Downloading Surah ${name} - Sheikh Mahmoud Al-Husary`);
+            const audioUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
+            window.open(audioUrl, '_blank');
         }
 
-        // Direct Audio Download
         function downloadAudio(number, name) {
             const paddedNum = number.toString().padStart(3, '0');
-            const audioUrl = `https://www.mp3quran.net/ar/omran_128kbps/${paddedNum}.mp3`;
-            
-            const a = document.createElement('a');
-            a.href = audioUrl;
-            a.download = `Surah_${name.replace(/\s+/g, '_')}_Sheikh_Al_Sudais.mp3`;
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            alert(`🎧 Downloading Surah ${name} - Sheikh Abdulrahman Al-Sudais`);
+            const audioUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
+            window.open(audioUrl, '_blank');
         }
 
-        // View Tafsir
         function viewTafsir(number, name) {
             const surah = surahs[number - 1];
-            let content = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
-            content += `<h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>`;
-            content += `<div class="meaning-text"><p><strong>Type:</strong> ${surah.type}</p><p><strong>Verses:</strong> ${surah.verses}</p></div>`;
-            content += `<div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;"><p><strong>Tafsir:</strong> Loading tafsir from quran.com...</p></div>`;
+            const content = `
+                <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                <h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>
+                <div class="meaning-text"><p><strong>Type:</strong> ${surah.type}</p><p><strong>Verses:</strong> ${surah.verses}</p></div>
+                <div id="tafsirContent" style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;"><p>Loading tafsir...</p></div>`;
             showModal(`Tafsir - Surah ${name}`, content);
             
-            // Fetch real tafsir from API
-            fetch(`https://api.quran.com/api/v4/tafsirs/20?chapter_number=${number}`)
-                .then(response => response.json())
+            fetch(`${TAFSIR_API}/${number}?translations=20&tafsirs=en-tafisr-ibn-kathir`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Tafsir API error');
+                    return response.json();
+                })
                 .then(data => {
+                    const verses = data.data && data.data.verses ? data.data.verses : [];
                     let tafsirContent = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
                     tafsirContent += `<h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>`;
                     tafsirContent += `<div class="meaning-text"><p><strong>Type:</strong> ${surah.type}</p><p><strong>Verses:</strong> ${surah.verses}</p></div>`;
                     
-                    if (data.tafsirs && data.tafsirs.length > 0) {
-                        // Show first few verses of tafsir
-                        let tafsirText = '';
-                        for(let i=0; i<Math.min(3, data.tafsirs.length); i++) {
-                            tafsirText += `<p style="margin-bottom:15px;"><strong>Verse ${data.tafsirs[i].verse_key}:</strong> ${data.tafsirs[i].text.substring(0, 500)}...</p>`;
+                    if (verses.length > 0) {
+                        let tafsirText = '<div style="max-height:400px;overflow-y:auto;">';
+                        const showCount = Math.min(5, verses.length);
+                        for (let i = 0; i < showCount; i++) {
+                            const v = verses[i];
+                            const tafsir = v.tafsirs && v.tafsirs.length > 0 ? v.tafsirs[0].text : '';
+                            const translation = v.translations && v.translations.length > 0 ? v.translations[0].text : '';
+                            tafsirText += `<div style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;">`;
+                            tafsirText += `<strong style="color:var(--accent);">${v.verse_key}:</strong> `;
+                            tafsirText += `<div style="margin-top:5px;color:var(--text-primary);">${translation}</div>`;
+                            if (tafsir) {
+                                tafsirText += `<div style="margin-top:8px;color:var(--text-secondary);font-size:0.95rem;line-height:1.6;">${tafsir.substring(0, 600)}${tafsir.length > 600 ? '...' : ''}</div>`;
+                            }
+                            tafsirText += `</div>`;
+                        }
+                        tafsirText += '</div>';
+                        if (verses.length > showCount) {
+                            tafsirText += `<p style="margin-top:15px;color:var(--text-secondary);"><em>Showing first ${showCount} verses. <a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full tafsir on Quran.com</a></em></p>`;
                         }
                         tafsirContent += `<div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;">${tafsirText}</div>`;
                     } else {
@@ -713,8 +712,10 @@
                 })
                 .catch(error => {
                     console.log('Tafsir fetch error:', error);
-                    document.getElementById('modalBody').innerHTML = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                    document.getElementById('modalBody').innerHTML = `
+                        <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
                         <h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>
+                        <div class="meaning-text"><p><strong>Type:</strong> ${surah.type}</p><p><strong>Verses:</strong> ${surah.verses}</p></div>
                         <div style="margin-top:20px;padding:20px;background:rgba(26,71,42,0.3);border-radius:12px;">
                             <p><strong>Tafsir:</strong> Surah ${name} is a ${surah.type.toLowerCase()} chapter revealed to Prophet Muhammad (peace be upon him). It contains ${surah.verses} verses and provides guidance on faith, worship, and morality.</p>
                             <p style="margin-top:10px;"><a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full tafsir on Quran.com</a></p>
@@ -722,30 +723,31 @@
                 });
         }
 
-        // View Translation
         function viewTranslation(number, name) {
             const surah = surahs[number - 1];
-            let content = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
-            content += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
-            content += `<div id="translationContent" style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;"><p>Loading translation from quran.com...</p></div>`;
+            const content = `
+                <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
+                <div id="translationContent" style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;"><p>Loading translation...</p></div>`;
             showModal(`Translation - Surah ${name}`, content);
             
-            // Fetch real translation from API (translation ID 20 is English)
-            fetch(`https://api.quran.com/api/v4/quran/translations/20?chapter_number=${number}`)
+            fetch(`${TRANSLATION_API}/${number}?translations=20`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.translations && data.translations.length > 0) {
+                    if (data.verses && data.verses.length > 0) {
                         let transContent = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
                         transContent += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
                         
-                        // Show first 5 verses of translation
                         let verseList = '<div style="max-height:400px;overflow-y:auto;">';
-                        for(let i=0; i<Math.min(5, data.translations.length); i++) {
-                            verseList += `<p style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;"><strong>${data.translations[i].verse_key}:</strong> ${data.translations[i].text}</p>`;
+                        const showCount = Math.min(5, data.verses.length);
+                        for (let i = 0; i < showCount; i++) {
+                            const v = data.verses[i];
+                            const translation = v.translations && v.translations.length > 0 ? v.translations[0].text : '';
+                            verseList += `<div style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;"><strong style="color:var(--accent);">${v.verse_key}:</strong> ${translation}</div>`;
                         }
                         verseList += '</div>';
-                        if (data.translations.length > 5) {
-                            verseList += `<p style="margin-top:15px;color:var(--text-secondary);"><em>And more ${data.translations.length - 5} verses...</em></p>`;
+                        if (data.verses.length > showCount) {
+                            verseList += `<p style="margin-top:15px;color:var(--text-secondary);"><em>Showing first ${showCount} verses. <a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full translation on Quran.com</a></em></p>`;
                         }
                         transContent += verseList;
                         document.getElementById('modalBody').innerHTML = transContent;
@@ -753,19 +755,20 @@
                 })
                 .catch(error => {
                     console.log('Translation fetch error:', error);
-                    document.getElementById('modalBody').innerHTML = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                    document.getElementById('modalBody').innerHTML = `
+                        <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
                         <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
                         <div style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;">
-                            <p>In the name of Allah, the Most Merciful, the Most Compassionate. Praise be to Allah, Lord of the Worlds. The Most Merciful, the Most Compassionate. Master of the Day of Judgment. It is You we worship and You we ask for help. Guide us to the Straight Path.</p>
+                            <p>In the name of Allah, the Most Merciful, the Especially Merciful. Praise be to Allah, Lord of all the worlds.</p>
                         </div>
                         <p style="margin-top:15px;color:var(--text-secondary);"><em>Note: Showing sample. <a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full translation on Quran.com</a></em></p>`;
                 });
         }
 
-        // View Meaning
         function viewMeaning(number, name) {
             const surah = surahs[number - 1];
-            const content = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+            const content = `
+                <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
                 <h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>
                 <div class="meaning-text">
                     <p><strong>Meaning:</strong> ${surah.meaning}</p>
@@ -779,7 +782,6 @@
             showModal(`Meaning - Surah ${name}`, content);
         }
 
-        // Download Full Quran
         function showFullQuranOptions() {
             const content = `
                 <div style="text-align:center;">
@@ -810,26 +812,19 @@
         function downloadFullQuranPdf() {
             closeModal();
             window.open('https://www.mp3quran.net/ar/omran/', '_blank');
-            alert('Opening PDF Quran download...');
         }
 
         function downloadFullQuranAudio() {
             closeModal();
-            const confirmed = confirm('This will start downloading all 114 MP3 files. Continue?');
+            const confirmed = confirm('This will open all 114 surah audio files. Continue?');
             if (confirmed) {
                 surahs.forEach((surah, index) => {
                     setTimeout(() => {
                         const paddedNum = surah.number.toString().padStart(3, '0');
-                        const a = document.createElement('a');
-                        a.href = `https://www.mp3quran.net/ar/omran_128kbps/${paddedNum}.mp3`;
-                        a.download = `Surah_${surah.number}_${surah.name.replace(/\s+/g, '_')}.mp3`;
-                        a.target = '_blank';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    }, index * 800);
+                        window.open(`${AUDIO_BASE}/${paddedNum}.mp3`, '_blank');
+                    }, index * 500);
                 });
-                alert('Started downloading all 114 surahs!');
+                alert('Opening all 114 surah audio files! Please allow popups for this site.');
             }
         }
 
@@ -855,7 +850,6 @@
             alert('Complete Quran downloaded!');
         }
 
-        // Theme Toggle
         function toggleTheme() {
             const body = document.body;
             const themeIcon = document.getElementById('themeIcon');
@@ -871,7 +865,6 @@
             }
         }
 
-        // Load saved theme
         function loadTheme() {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'light') {
@@ -882,7 +875,6 @@
             }
         }
 
-        // Audio Player
         let currentSurahNumber = 0;
         let isPlaying = false;
         const audioPlayer = document.getElementById('audioPlayer');
@@ -890,9 +882,7 @@
         function playSurah(number, name) {
             currentSurahNumber = number;
             const paddedNum = number.toString().padStart(3, '0');
-            
-            // Using surahquran.com - reliable Quran audio source
-            const audioUrl = `https://surahquran.com/mp3/Alsudaes/${paddedNum}.mp3`;
+            const audioUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
             
             document.getElementById('audioPlayerTitle').textContent = `Surah ${name}`;
             document.getElementById('audioPlayerSubtitle').textContent = 'Sheikh Abdulrahman Al-Sudais';
@@ -914,48 +904,18 @@
                     document.getElementById('playPauseIcon').classList.add('fa-pause');
                     updateEqualizer();
                 }).catch(error => {
-                    console.log('Play failed, opening in new tab');
-                    window.open(audioUrl, '_blank');
+                    console.log('Play failed:', error);
+                    showAudioError('Unable to play audio. Tap again or check connection.');
                 });
             }
         }
-        
-        function tryAudioSource(sources, index, name) {
-            if (index >= sources.length) {
-                // All sources failed - try opening in new tab as last resort
-                const paddedNum = currentSurahNumber.toString().padStart(3, '0');
-                const fallbackUrl = `https://surahquran.com/mp3/Alsudaes/${paddedNum}.mp3`;
-                window.open(fallbackUrl, '_blank');
-                showAudioError('Audio unavailable. Opened in new tab.');
-                return;
-            }
-            
-            audioPlayer.src = sources[index];
-            audioPlayer.volume = document.getElementById('volumeSlider').value / 100;
-            
-            const playPromise = audioPlayer.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    isPlaying = true;
-                    document.getElementById('playPauseIcon').classList.remove('fa-play');
-                    document.getElementById('playPauseIcon').classList.add('fa-pause');
-                    document.getElementById('audioPlayerSubtitle').textContent = 'Sheikh Omar Al-Omran';
-                    document.getElementById('audioPlayerSubtitle').style.color = '';
-                    updateEqualizer();
-                }).catch(error => {
-                    console.log(`Source ${index + 1} failed (${sources[index]}), trying next...`);
-                    tryAudioSource(sources, index + 1, name);
-                });
-            }
-        }
-        
+
         function showAudioError(message) {
             isPlaying = false;
             document.getElementById('playPauseIcon').classList.remove('fa-pause');
             document.getElementById('playPauseIcon').classList.add('fa-play');
             document.getElementById('totalTime').textContent = 'Error';
             document.getElementById('audioEqualizer').classList.add('paused');
-            // Show error in a user-friendly way
             document.getElementById('audioPlayerSubtitle').textContent = message;
             document.getElementById('audioPlayerSubtitle').style.color = '#ff6b6b';
         }
@@ -1001,7 +961,6 @@
             isPlaying = false;
             document.getElementById('audioPlayerBar').classList.remove('active');
             document.body.classList.remove('audio-player-active');
-            // Reset subtitle styling
             document.getElementById('audioPlayerSubtitle').style.color = '';
         }
 
@@ -1009,6 +968,7 @@
             isPlaying = false;
             document.getElementById('playPauseIcon').classList.remove('fa-pause');
             document.getElementById('playPauseIcon').classList.add('fa-play');
+            updateEqualizer();
             playNextSurah();
         }
 
@@ -1048,10 +1008,10 @@
             document.getElementById('playPauseIcon').classList.add('fa-play');
             document.getElementById('totalTime').textContent = 'Error';
             document.getElementById('audioEqualizer').classList.add('paused');
-            // Show user-friendly error message
             document.getElementById('audioPlayerSubtitle').textContent = 'Unable to play audio. Check internet connection.';
             document.getElementById('audioPlayerSubtitle').style.color = '#ff6b6b';
         }
+
         let previousVolume = 100;
         function setVolume(value) {
             audioPlayer.volume = value / 100;
@@ -1081,7 +1041,6 @@
             }
         }
 
-        // Speed Control
         let playbackSpeed = 1;
         const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
         function toggleSpeed() {
@@ -1091,7 +1050,6 @@
             document.getElementById('speedBtn').textContent = playbackSpeed + 'x';
         }
 
-        // Repeat Control
         let isRepeat = false;
         function toggleRepeat() {
             isRepeat = !isRepeat;
@@ -1105,7 +1063,6 @@
             }
         }
 
-        // Equalizer Animation
         function updateEqualizer() {
             const equalizer = document.getElementById('audioEqualizer');
             if (isPlaying) {
@@ -1115,11 +1072,9 @@
             }
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             renderSurahs(surahs);
             loadTheme();
-            // Load Google Ads
             (adsbygoogle = window.adsbygoogle || []).push({});
         });
     </script>
