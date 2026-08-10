@@ -553,6 +553,7 @@
         ];
 
         const AUDIO_BASE = 'https://cdn.islamic.network/quran/audio-surah/128/ar.sudaisshuraymnaeemsultan';
+        const AUDIO_FALLBACK = 'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy';
         const TRANSLATION_API = 'https://api.quran.com/api/v4/verses/by_chapter';
         const TAFSIR_API = 'https://api.islamic.app/v1/verses/by_chapter';
 
@@ -877,12 +878,15 @@
 
         let currentSurahNumber = 0;
         let isPlaying = false;
+        let audioReady = false;
         const audioPlayer = document.getElementById('audioPlayer');
 
         function playSurah(number, name) {
             currentSurahNumber = number;
             const paddedNum = number.toString().padStart(3, '0');
-            const audioUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
+            const primaryUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
+            const fallbackUrl = `${AUDIO_FALLBACK}/${paddedNum}.mp3`;
+            let useFallback = false;
             
             document.getElementById('audioPlayerTitle').textContent = `Surah ${name}`;
             document.getElementById('audioPlayerSubtitle').textContent = 'Sheikh Abdulrahman Al-Sudais';
@@ -893,21 +897,71 @@
             document.getElementById('currentTime').textContent = '0:00';
             document.getElementById('totalTime').textContent = '0:00';
             
-            audioPlayer.src = audioUrl;
-            audioPlayer.volume = document.getElementById('volumeSlider').value / 100;
+            audioPlayer.pause();
+            audioPlayer.removeEventListener('canplay', onAudioCanPlay);
+            audioPlayer.removeEventListener('error', onAudioError);
+            audioReady = false;
             
-            const playPromise = audioPlayer.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    isPlaying = true;
-                    document.getElementById('playPauseIcon').classList.remove('fa-play');
-                    document.getElementById('playPauseIcon').classList.add('fa-pause');
-                    updateEqualizer();
-                }).catch(error => {
-                    console.log('Play failed:', error);
-                    showAudioError('Unable to play audio. Tap again or check connection.');
-                });
-            }
+            const attemptPlay = (url) => {
+                audioPlayer.src = url;
+                audioPlayer.load();
+                audioPlayer.volume = document.getElementById('volumeSlider').value / 100;
+                
+                const timeout = setTimeout(() => {
+                    if (!audioReady) {
+                        audioPlayer.removeEventListener('canplay', onAudioCanPlay);
+                        audioPlayer.removeEventListener('error', onAudioError);
+                        if (!useFallback) {
+                            useFallback = true;
+                            attemptPlay(fallbackUrl);
+                        } else {
+                            showAudioError('Audio is taking too long. Tap again or check connection.');
+                        }
+                    }
+                }, 8000);
+                
+                const onAudioCanPlay = () => {
+                    clearTimeout(timeout);
+                    audioPlayer.removeEventListener('canplay', onAudioCanPlay);
+                    audioPlayer.removeEventListener('error', onAudioError);
+                    audioReady = true;
+                    
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            isPlaying = true;
+                            document.getElementById('playPauseIcon').classList.remove('fa-play');
+                            document.getElementById('playPauseIcon').classList.add('fa-pause');
+                            updateEqualizer();
+                        }).catch(error => {
+                            console.log('Play failed:', error);
+                            if (!useFallback) {
+                                useFallback = true;
+                                attemptPlay(fallbackUrl);
+                            } else {
+                                showAudioError('Unable to play audio. Tap again or check connection.');
+                            }
+                        });
+                    }
+                };
+                
+                const onAudioError = () => {
+                    clearTimeout(timeout);
+                    audioPlayer.removeEventListener('canplay', onAudioCanPlay);
+                    audioPlayer.removeEventListener('error', onAudioError);
+                    if (!useFallback) {
+                        useFallback = true;
+                        attemptPlay(fallbackUrl);
+                    } else {
+                        showAudioError('Unable to load audio. Try again later.');
+                    }
+                };
+                
+                audioPlayer.addEventListener('canplay', onAudioCanPlay, { once: true });
+                audioPlayer.addEventListener('error', onAudioError, { once: true });
+            };
+            
+            attemptPlay(primaryUrl);
         }
 
         function showAudioError(message) {
