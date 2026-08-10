@@ -657,13 +657,21 @@
             closeModal();
             const paddedNum = number.toString().padStart(3, '0');
             const audioUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
-            window.open(audioUrl, '_blank');
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = audioUrl;
+            document.body.appendChild(iframe);
+            setTimeout(() => document.body.removeChild(iframe), 5000);
         }
 
         function downloadAudio(number, name) {
             const paddedNum = number.toString().padStart(3, '0');
             const audioUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
-            window.open(audioUrl, '_blank');
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = audioUrl;
+            document.body.appendChild(iframe);
+            setTimeout(() => document.body.removeChild(iframe), 5000);
         }
 
         function viewTafsir(number, name) {
@@ -729,7 +737,7 @@
                 <div id="translationContent" style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;"><p>Loading translation...</p></div>`;
             showModal(`Translation - Surah ${name}`, content);
             
-            fetch(`${TRANSLATION_API}/${number}?translations=20`)
+            fetch(`${TRANSLATION_API}/${number}?translations=20&per_page=300`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.verses && data.verses.length > 0) {
@@ -811,15 +819,19 @@
 
         function downloadFullQuranAudio() {
             closeModal();
-            const confirmed = confirm('This will open all 114 surah audio files. Continue?');
+            const confirmed = confirm('This will start downloading all 114 surah audio files. Continue?');
             if (confirmed) {
                 surahs.forEach((surah, index) => {
                     setTimeout(() => {
                         const paddedNum = surah.number.toString().padStart(3, '0');
-                        window.open(`${AUDIO_BASE}/${paddedNum}.mp3`, '_blank');
+                        const iframe = document.createElement('iframe');
+                        iframe.style.display = 'none';
+                        iframe.src = `${AUDIO_BASE}/${paddedNum}.mp3`;
+                        document.body.appendChild(iframe);
+                        setTimeout(() => document.body.removeChild(iframe), 5000);
                     }, index * 500);
                 });
-                alert('Opening all 114 surah audio files! Please allow popups for this site.');
+                alert('Started downloading all 114 surahs! Please allow popups for this site.');
             }
         }
 
@@ -897,62 +909,36 @@
             const attemptPlay = (url) => {
                 audioPlayer.src = url;
                 audioPlayer.load();
-                audioPlayer.volume = document.getElementById('volumeSlider').value / 100;
                 
-                const timeout = setTimeout(() => {
-                    if (!audioReady) {
-                        audioPlayer.removeEventListener('canplay', onAudioCanPlay);
-                        audioPlayer.removeEventListener('error', onAudioError);
+                const playPromise = audioPlayer.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isPlaying = true;
+                        document.getElementById('playPauseIcon').classList.remove('fa-play');
+                        document.getElementById('playPauseIcon').classList.add('fa-pause');
+                        updateEqualizer();
+                    }).catch(error => {
+                        console.log('Play failed:', error);
                         if (!useFallback) {
                             useFallback = true;
                             attemptPlay(fallbackUrl);
                         } else {
-                            showAudioError('Audio is taking too long. Tap again or check connection.');
+                            showAudioError('Unable to play audio. Tap again or check connection.');
                         }
-                    }
-                }, 8000);
-                
-                const onAudioCanPlay = () => {
-                    clearTimeout(timeout);
-                    audioPlayer.removeEventListener('canplay', onAudioCanPlay);
-                    audioPlayer.removeEventListener('error', onAudioError);
-                    audioReady = true;
-                    
-                    const playPromise = audioPlayer.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            isPlaying = true;
-                            document.getElementById('playPauseIcon').classList.remove('fa-play');
-                            document.getElementById('playPauseIcon').classList.add('fa-pause');
-                            updateEqualizer();
-                        }).catch(error => {
-                            console.log('Play failed:', error);
-                            if (!useFallback) {
-                                useFallback = true;
-                                attemptPlay(fallbackUrl);
-                            } else {
-                                showAudioError('Unable to play audio. Tap again or check connection.');
-                            }
-                        });
-                    }
-                };
-                
-                const onAudioError = () => {
-                    clearTimeout(timeout);
-                    audioPlayer.removeEventListener('canplay', onAudioCanPlay);
-                    audioPlayer.removeEventListener('error', onAudioError);
-                    if (!useFallback) {
-                        useFallback = true;
-                        attemptPlay(fallbackUrl);
-                    } else {
-                        showAudioError('Unable to load audio. Try again later.');
-                    }
-                };
-                
-                audioPlayer.addEventListener('canplay', onAudioCanPlay, { once: true });
-                audioPlayer.addEventListener('error', onAudioError, { once: true });
+                    });
+                }
             };
             
+            const onAudioError = () => {
+                if (!useFallback) {
+                    useFallback = true;
+                    attemptPlay(fallbackUrl);
+                } else {
+                    showAudioError('Unable to load audio. Try again later.');
+                }
+            };
+            
+            audioPlayer.addEventListener('error', onAudioError, { once: true });
             attemptPlay(primaryUrl);
         }
 
