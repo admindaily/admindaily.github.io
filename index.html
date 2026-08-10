@@ -1075,6 +1075,35 @@
             loadHadiths();
         }
 
+        function viewSeerah(number, name) {
+            const surah = surahs[number - 1];
+            const seerahEvents = [
+                { title: 'Revelation Context', desc: `Surah ${name} was revealed during a significant period in the Prophet's (PBUH) life. Understanding the Seerah helps us appreciate the divine wisdom behind its revelation.` },
+                { title: 'Prophet's Patience', desc: `The Prophet (PBUH) exemplified patience and perseverance when conveying the message of Surah ${name}. His life teaches us to remain steadfast in faith.` },
+                { title: 'Lessons from the Prophet', desc: `From the Seerah, we learn that the Prophet (PBUH) implemented the teachings of Surah ${name} in his daily life, showing us how to live by the Quran's guidance.` }
+            ];
+            
+            let content = `
+                <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - Prophet's Story & Context</p>`;
+            
+            seerahEvents.forEach(event => {
+                content += `
+                    <div style="margin-bottom:20px;padding:15px;background:rgba(45,90,90,0.2);border-radius:12px;border-left:4px solid #2d5a5a;">
+                        <h4 style="color:var(--accent);margin-bottom:10px;"><i class="fas fa-star-and-crescent"></i> ${event.title}</h4>
+                        <p style="color:var(--text-primary);line-height:1.7;">${event.desc}</p>
+                    </div>`;
+            });
+            
+            content += `
+                <div style="padding:15px;background:rgba(212,168,83,0.1);border-radius:8px;border-left:3px solid var(--accent);margin-top:20px;">
+                    <strong style="color:var(--accent);">Reflection:</strong>
+                    <p style="margin-top:5px;color:var(--text-secondary);line-height:1.6;">The Seerah of the Prophet (PBUH) provides the perfect example of how to live by the Quran's teachings. May we follow his footsteps.</p>
+                </div>`;
+            
+            showModal(`Seerah - Surah ${name}`, content);
+        }
+
         function showFullQuranOptions() {
             const content = `
                 <div style="text-align:center;">
