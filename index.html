@@ -927,27 +927,33 @@
                 });
         }
 
-        function generateHadithExplanation(hadith, text, narrator) {
-            const lowerText = text.toLowerCase();
+        function generateHadithExplanation(hadith, text, narrator, surahName) {
             const explanations = [];
-
-            if (lowerText.includes('intention') || lowerText.includes('heart') || lowerText.includes('niat')) {
-                explanations.push('This hadith teaches us that the quality of our actions depends on our inner intention. Before doing any good deed, we should sincerely intend to please Allah alone, not to show off or gain worldly recognition.');
+            const lowerText = text.toLowerCase();
+            
+            if (lowerText.includes('prayer') || lowerText.includes('salah') || lowerText.includes('pray')) {
+                explanations.push('This hadith emphasizes the importance of establishing regular prayer (Salah), which is one of the five pillars of Islam. Prayer is the direct connection between a believer and Allah, and it serves as a means of seeking guidance, forgiveness, and spiritual nourishment throughout the day.');
             }
-            if (lowerText.includes('prayer') || lowerText.includes('salah') || lowerText.includes('salat')) {
-                explanations.push('Prayer is the foundation of our relationship with Allah. This reminds us to establish prayer regularly, on time, and with proper concentration, as it is the first deed we will be judged for on the Day of Judgment.');
-            }
-            if (lowerText.includes('charity') || lowerText.includes('poor') || lowerText.includes('orphan') || lowerText.includes('give')) {
-                explanations.push('Charity is not just about money - it includes any act of kindness. This teaches us to be generous, help those in need, and understand that giving purifies our wealth and soul.');
+            if (lowerText.includes('charity') || lowerText.includes('sadaqah') || lowerText.includes('give')) {
+                explanations.push('Charity (Sadaqah) is a fundamental principle in Islam that purifies wealth and helps those in need. This hadith reminds us of the social responsibility Muslims have toward the less fortunate and the spiritual reward that comes from giving willingly for the sake of Allah.');
             }
             if (lowerText.includes('patience') || lowerText.includes('sabr')) {
-                explanations.push('Patience is a quality Allah loves. This hadith reminds us to remain patient during hardships, trusting that Allah is with those who persevere, and that every difficulty has wisdom behind it.');
+                explanations.push('Patience (Sabr) is a highly valued virtue in Islam. This hadith teaches that believers should remain steadfast during times of hardship, trusting in Allah\'s wisdom and promise that ease follows difficulty. Patience is not passive endurance but active perseverance with a positive mindset.');
             }
-            if (lowerText.includes('good') || lowerText.includes('kindness') || lowerText.includes('mercy') || lowerText.includes('neighbor')) {
-                explanations.push('Islam emphasizes treating others with kindness and mercy. This teaches us to be compassionate in our daily interactions, to help our neighbors, and to spread goodness wherever we go.');
+            if (lowerText.includes('knowledge') || lowerText.includes('learn') || lowerText.includes('seek')) {
+                explanations.push('The pursuit of knowledge is highly encouraged in Islam. This hadith highlights the importance of seeking knowledge throughout one\'s life, as it brings believers closer to understanding Allah\'s creation and commandments. Knowledge should be sought with humility and applied with wisdom.');
             }
-            if (lowerText.includes('knowledge') || lowerText.includes('learn') || lowerText.includes('seek') || lowerText.includes('teach')) {
-                explanations.push('Seeking knowledge is an obligation in Islam. This hadith encourages us to continuously learn, share beneficial knowledge, and understand that learning brings us closer to Allah and benefits others.');
+            if (lowerText.includes('good') || lowerText.includes('righteous') || lowerText.includes('deed')) {
+                explanations.push('Good deeds and righteous actions are the essence of a believer\'s life. This hadith reminds us that every good action, no matter how small, is counted and rewarded by Allah when done with sincere intention. It encourages Muslims to consistently engage in acts of worship and kindness.');
+            }
+            if (lowerText.includes('mercy') || lowerText.includes('compassion') || lowerText.includes('kindness')) {
+                explanations.push('Mercy and compassion are central to the Islamic faith. This hadith reflects Allah\'s mercy toward His creation and the importance of showing kindness to others. The Prophet Muhammad (PBUH) was known as the "Merciful" and taught that mercy is reciprocated by Allah\'s mercy.');
+            }
+            if (lowerText.includes('forgive') || lowerText.includes('forgiveness')) {
+                explanations.push('Forgiveness is a noble quality that brings peace to the heart. This hadith encourages believers to forgive others as they seek Allah\'s forgiveness. It teaches that holding grudges harms the soul, while forgiveness liberates both the giver and receiver.');
+            }
+            if (lowerText.includes('intention') || lowerText.includes('niyyah') || lowerText.includes('heart')) {
+                explanations.push('Intentions (Niyyah) are the foundation of all actions in Islam. This hadith emphasizes that the value of any deed depends on the purity of intention behind it. Actions done solely for Allah\'s pleasure are rewarded, while those done for show or worldly gain are not.');
             }
             if (lowerText.includes('parents') || lowerText.includes('mother') || lowerText.includes('father')) {
                 explanations.push('Respecting and serving our parents is one of the most beloved deeds to Allah. This teaches us to be patient with them, honor them, and recognize their immense sacrifice for us.');
@@ -955,35 +961,30 @@
             if (lowerText.includes('smile') || lowerText.includes('greet') || lowerText.includes('peace') || lowerText.includes('salam')) {
                 explanations.push('Simple acts of kindness like smiling and greeting others with peace are highly valued in Islam. This reminds us to spread positivity, build bridges of friendship, and create harmony in our communities.');
             }
-            if (lowerText.includes('forgive') || lowerText.includes('reconcile') || lowerText.includes('conflict')) {
-                explanations.push('Forgiveness is a powerful act of worship. This teaches us to let go of grudges, reconcile with others, and understand that forgiving others leads to Allah's mercy and inner peace.');
-            }
             if (lowerText.includes('truth') || lowerText.includes('honest') || lowerText.includes('lie')) {
                 explanations.push('Honesty and truthfulness are core Islamic values. This reminds us to always speak the truth, keep our promises, and maintain integrity in all our dealings, even when it is difficult.');
             }
             if (lowerText.includes('gratitude') || lowerText.includes('thankful') || lowerText.includes('shukr')) {
-                explanations.push('Gratitude is the key to a contented life. This teaches us to appreciate Allah's blessings, thank Him regularly, and express gratitude to people who help us.');
+                explanations.push('Gratitude is the key to a contented life. This teaches us to appreciate Allah\'s blessings, thank Him regularly, and express gratitude to people who help us.');
             }
             if (lowerText.includes('prostration') || lowerText.includes('quran') || lowerText.includes('read') || lowerText.includes('recite')) {
-                explanations.push('The Quran is Allah's guidance for humanity. This reminds us to read, reflect upon, and implement the Quran in our daily lives, as it contains wisdom, healing, and guidance for all aspects of life.');
+                explanations.push('The Quran is Allah\'s guidance for humanity. This reminds us to read, reflect upon, and implement the Quran in our daily lives, as it contains wisdom, healing, and guidance for all aspects of life.');
             }
             if (lowerText.includes('hell') || lowerText.includes('fire') || lowerText.includes('punishment')) {
-                explanations.push('This hadith serves as a reminder of the Hereafter and accountability. It motivates us to avoid sin, seek Allah's forgiveness, and prepare for the eternal life through righteous actions.');
+                explanations.push('This hadith serves as a reminder of the Hereafter and accountability. It motivates us to avoid sin, seek Allah\'s forgiveness, and prepare for the eternal life through righteous actions.');
             }
             if (lowerText.includes('paradise') || lowerText.includes('heaven') || lowerText.includes('jannah')) {
-                explanations.push('The promise of Paradise inspires us to do good deeds. This teaches us to strive for Allah's pleasure, perform righteous actions, and maintain hope in Allah's infinite mercy.');
+                explanations.push('The promise of Paradise inspires us to do good deeds. This teaches us to strive for Allah\'s pleasure, perform righteous actions, and maintain hope in Allah\'s infinite mercy.');
             }
             if (lowerText.includes('allah') && lowerText.includes('love')) {
-                explanations.push('Allah loves those who do good. This reminds us to do righteous deeds sincerely, knowing that Allah's love and mercy are greater than any worldly pleasure.');
+                explanations.push('Allah loves those who do good. This reminds us to do righteous deeds sincerely, knowing that Allah\'s love and mercy are greater than any worldly pleasure.');
             }
 
             if (explanations.length === 0) {
-                explanations.push('This hadith contains timeless wisdom from the Prophet Muhammad (peace be upon him). Reflect on its meaning and apply its lessons in your daily life to strengthen your faith and character.');
-                if (hadith.grade === 'Sahih') {
-                    explanations.push('As a Sahih hadith, this narration is authentic and provides strong guidance for Muslims. Following this teaching brings great reward and draws us closer to the Prophet's exemplary character.');
-                }
+                explanations.push(`This hadith provides guidance related to Surah ${surahName} and offers timeless wisdom for believers. It highlights an important aspect of Islamic teachings that, when understood and applied, can bring a Muslim closer to Allah and help them live a righteous life according to the Quran and Sunnah.`);
+                explanations.push('The context of this hadith reminds us of the Prophet Muhammad\'s (PBUH) exemplary character and his dedication to conveying Allah\'s message with wisdom and compassion. Understanding such hadiths strengthens our faith and helps us navigate life\'s challenges with Islamic principles.');
             }
-
+            
             return explanations.join(' ');
         }
 
@@ -1040,6 +1041,7 @@
                         const narrator = narratorMatch ? narratorMatch[1].trim() : 'Unknown';
                         const text = hadith.english.replace(/Narrated [^:]+: /, '');
                         const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
+                        const explanation = generateHadithExplanation(hadith, text, narrator, name);
 
                         const explanation = generateHadithExplanation(hadith, text, narrator);
                         hadithContent += `<div style="margin-bottom:20px;padding:15px;background:rgba(26,71,42,0.3);border-radius:12px;border-left:4px solid ${gradeColor};">
@@ -1051,7 +1053,7 @@
                             <div class="arabic-text" style="text-align:right;margin-bottom:10px;font-size:1.1rem;">${hadith.arabic}</div>
                             <div style="color:var(--text-primary);line-height:1.7;margin-bottom:10px;"><strong>Meaning:</strong> ${text}</div>
                             <div style="padding:10px;background:rgba(212,168,83,0.1);border-radius:8px;border-left:3px solid var(--accent);">
-                                <strong style="color:var(--accent);">Real-Life Lesson:</strong>
+                                <strong style="color:var(--accent);">Detailed Explanation:</strong>
                                 <p style="margin-top:5px;color:var(--text-secondary);line-height:1.6;font-size:0.95rem;">${explanation}</p>
                             </div>
                         </div>`;
