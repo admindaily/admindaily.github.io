@@ -342,6 +342,11 @@
             </p>
         </section>
 
+        <section class="daily-hadith" style="max-width:700px;margin:0 auto 50px;background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:24px;">
+            <h2 style="color:var(--accent);margin-bottom:15px;text-align:center;"><i class="fas fa-book"></i> Hadith of the Day</h2>
+            <div id="dailyHadithContent"><p style="color:var(--text-secondary);text-align:center;">Loading daily hadith...</p></div>
+        </section>
+
         <div class="ad-container">
             <div class="ad-banner">
                 <ins class="adsbygoogle"
@@ -786,16 +791,6 @@
             setTimeout(() => document.body.removeChild(iframe), 5000);
         }
 
-        function downloadAudio(number, name) {
-            const paddedNum = number.toString().padStart(3, '0');
-            const audioUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = audioUrl;
-            document.body.appendChild(iframe);
-            setTimeout(() => document.body.removeChild(iframe), 5000);
-        }
-
         function viewTafsir(number, name) {
             const surah = surahs[number - 1];
             const content = `
@@ -851,82 +846,39 @@
                 });
         }
 
-        function viewTranslation(number, name) {
+        function showVersesModal(number, name, titlePrefix) {
             const surah = surahs[number - 1];
-            const content = `
+            const intro = `
                 <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
-                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
-                <div id="translationContent" style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;"><p>Loading translation...</p></div>`;
-            showModal(`Translation - Surah ${name}`, content);
-            
+                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
+            showModal(`${titlePrefix} - Surah ${name}`, intro + `<div id="verseContent" style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;"><p>Loading ${titlePrefix.toLowerCase()}...</p></div>`);
+
             fetch(`${TRANSLATION_API}/${number}?translations=20&per_page=300`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.verses && data.verses.length > 0) {
-                        let transContent = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
-                        transContent += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
-                        
                         let verseList = '<div style="max-height:400px;overflow-y:auto;">';
-                        const showCount = data.verses.length;
-                        for (let i = 0; i < showCount; i++) {
+                        for (let i = 0; i < data.verses.length; i++) {
                             const v = data.verses[i];
                             const translation = v.translations && v.translations.length > 0 ? v.translations[0].text : '';
                             verseList += `<div style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;"><strong style="color:var(--accent);">${v.verse_key}:</strong> ${translation}</div>`;
                         }
                         verseList += '</div>';
-                        transContent += verseList;
-                        document.getElementById('modalBody').innerHTML = transContent;
+                        document.getElementById('modalBody').innerHTML = intro + verseList;
                     }
                 })
                 .catch(error => {
-                    console.log('Translation fetch error:', error);
-                    document.getElementById('modalBody').innerHTML = `
-                        <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
-                        <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
+                    console.log(`${titlePrefix} fetch error:`, error);
+                    document.getElementById('modalBody').innerHTML = `${intro}
                         <div style="padding:15px;background:rgba(26,71,42,0.3);border-radius:8px;">
                             <p>In the name of Allah, the Most Merciful, the Especially Merciful. Praise be to Allah, Lord of all the worlds.</p>
                         </div>
-                        <p style="margin-top:15px;color:var(--text-secondary);"><em>Note: Showing sample. <a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full translation on Quran.com</a></em></p>`;
+                        <p style="margin-top:15px;color:var(--text-secondary);"><em>Note: Showing sample. <a href="https://quran.com/${number}" target="_blank" style="color:var(--accent);">View full on Quran.com</a></em></p>`;
                 });
         }
 
-        function viewMeaning(number, name) {
-            const surah = surahs[number - 1];
-            const content = `
-                <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
-                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
-                <div id="meaningContent" style="padding:15px;background:rgba(212,168,83,0.1);border-radius:8px;"><p>Loading meaning...</p></div>`;
-            showModal(`Meaning - Surah ${name}`, content);
-
-            fetch(`${TRANSLATION_API}/${number}?translations=20&per_page=300`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.verses && data.verses.length > 0) {
-                        let meaningContent = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
-                        meaningContent += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
-
-                        let verseList = '<div style="max-height:400px;overflow-y:auto;">';
-                        const showCount = data.verses.length;
-                        for (let i = 0; i < showCount; i++) {
-                            const v = data.verses[i];
-                            const translation = v.translations && v.translations.length > 0 ? v.translations[0].text : '';
-                            verseList += `<div style="margin-bottom:15px;padding:10px;background:rgba(212,168,83,0.1);border-radius:8px;"><strong style="color:var(--accent);">${v.verse_key}:</strong> ${translation}</div>`;
-                        }
-                        verseList += '</div>';
-                        meaningContent += verseList;
-                        document.getElementById('modalBody').innerHTML = meaningContent;
-                    }
-                })
-                .catch(error => {
-                    console.log('Meaning fetch error:', error);
-                    document.getElementById('modalBody').innerHTML = `
-                        <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
-                        <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
-                        <div style="padding:15px;background:rgba(212,168,83,0.1);border-radius:8px;">
-                            <p>In the name of Allah, the Most Merciful, the Especially Merciful. Praise be to Allah, Lord of all the worlds.</p>
-                        </div>`;
-                });
-        }
+        function viewTranslation(number, name) { showVersesModal(number, name, 'Translation'); }
+        function viewMeaning(number, name) { showVersesModal(number, name, 'Meaning'); }
 
         function generateHadithExplanation(hadith, text, narrator, surahName) {
             const explanations = [];
@@ -1042,8 +994,6 @@
                         const narrator = narratorMatch ? narratorMatch[1].trim() : 'Unknown';
                         const text = hadith.english.replace(/Narrated [^:]+: /, '');
                         const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
-                        const explanation = generateHadithExplanation(hadith, text, narrator, name);
-
                         const explanation = generateHadithExplanation(hadith, text, narrator);
                         hadithContent += `<div style="margin-bottom:20px;padding:15px;background:rgba(26,71,42,0.3);border-radius:12px;border-left:4px solid ${gradeColor};">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:5px;">
@@ -1079,7 +1029,7 @@
             const surah = surahs[number - 1];
             const seerahEvents = [
                 { title: 'Revelation Context', desc: `Surah ${name} was revealed during a significant period in the Prophet's (PBUH) life. Understanding the Seerah helps us appreciate the divine wisdom behind its revelation.` },
-                { title: 'Prophet's Patience', desc: `The Prophet (PBUH) exemplified patience and perseverance when conveying the message of Surah ${name}. His life teaches us to remain steadfast in faith.` },
+                { title: "Prophet's Patience", desc: `The Prophet (PBUH) exemplified patience and perseverance when conveying the message of Surah ${name}. His life teaches us to remain steadfast in faith.` },
                 { title: 'Lessons from the Prophet', desc: `From the Seerah, we learn that the Prophet (PBUH) implemented the teachings of Surah ${name} in his daily life, showing us how to live by the Quran's guidance.` }
             ];
             
@@ -1155,6 +1105,8 @@
         }
 
         function loadDailyHadith() {
+            const target = document.getElementById('dailyHadithContent');
+            if (!target) return;
             const collections = ['bukhari', 'muslim', 'abudawud'];
             const randomCol = collections[Math.floor(Math.random() * collections.length)];
             const randomNum = Math.floor(Math.random() * 100) + 1;
@@ -1169,7 +1121,7 @@
                         const text = hadith.english.replace(/Narrated [^:]+: /, '');
                         const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
 
-                        document.getElementById('dailyHadithContent').innerHTML = `
+                        target.innerHTML = `
                             <div style="margin-bottom:10px;color:var(--text-secondary);font-size:0.9rem;"><strong>Narrator:</strong> ${narrator}</div>
                             <div class="arabic-text" style="text-align:right;margin-bottom:10px;font-size:1.1rem;">${hadith.arabic}</div>
                             <div style="color:var(--text-primary);line-height:1.7;margin-bottom:10px;">${text}</div>
@@ -1182,7 +1134,7 @@
                     }
                 })
                 .catch(error => {
-                    document.getElementById('dailyHadithContent').innerHTML = '<p style="color:var(--text-secondary);">Unable to load daily hadith. Please try again later.</p>';
+                    target.innerHTML = '<p style="color:var(--text-secondary);">Unable to load daily hadith. Please try again later.</p>';
                 });
         }
 
@@ -1265,61 +1217,44 @@
 
                 const source = sources[sourceIndex];
                 document.getElementById('audioPlayerSubtitle').textContent = source.label;
-                let objectUrl = null;
 
-                const loadAndPlay = (url) => {
-                    audioPlayer.src = url;
-                    audioPlayer.load();
-
-                    const onCanPlay = () => {
-                        audioPlayer.removeEventListener('canplay', onCanPlay);
-                        audioPlayer.removeEventListener('error', onError);
-                        clearTimeout(timeout);
-                        const playPromise = audioPlayer.play();
-                        if (playPromise) {
-                            playPromise.then(() => {
-                                isPlaying = true;
-                                document.getElementById('playPauseIcon').classList.remove('fa-play');
-                                document.getElementById('playPauseIcon').classList.add('fa-pause');
-                                updateEqualizer();
-                            }).catch(() => {
-                                sourceIndex++;
-                                trySource();
-                            });
-                        }
-                    };
-
-                    const onError = () => {
-                        audioPlayer.removeEventListener('canplay', onCanPlay);
-                        audioPlayer.removeEventListener('error', onError);
-                        clearTimeout(timeout);
-                        sourceIndex++;
-                        trySource();
-                    };
-
-                    const timeout = setTimeout(() => {
-                        audioPlayer.removeEventListener('canplay', onCanPlay);
-                        audioPlayer.removeEventListener('error', onError);
-                        sourceIndex++;
-                        trySource();
-                    }, 15000);
-
-                    audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
-                    audioPlayer.addEventListener('error', onError, { once: true });
+                const onCanPlay = () => {
+                    audioPlayer.removeEventListener('canplay', onCanPlay);
+                    audioPlayer.removeEventListener('error', onError);
+                    clearTimeout(timeout);
+                    const playPromise = audioPlayer.play();
+                    if (playPromise) {
+                        playPromise.then(() => {
+                            isPlaying = true;
+                            document.getElementById('playPauseIcon').classList.remove('fa-play');
+                            document.getElementById('playPauseIcon').classList.add('fa-pause');
+                            updateEqualizer();
+                        }).catch(() => {
+                            sourceIndex++;
+                            trySource();
+                        });
+                    }
                 };
 
-                fetch(source.url, { mode: 'cors' })
-                    .then(response => {
-                        if (!response.ok) throw new Error('HTTP ' + response.status);
-                        return response.blob();
-                    })
-                    .then(blob => {
-                        objectUrl = URL.createObjectURL(blob);
-                        loadAndPlay(objectUrl);
-                    })
-                    .catch(() => {
-                        loadAndPlay(source.url);
-                    });
+                const onError = () => {
+                    audioPlayer.removeEventListener('canplay', onCanPlay);
+                    audioPlayer.removeEventListener('error', onError);
+                    clearTimeout(timeout);
+                    sourceIndex++;
+                    trySource();
+                };
+
+                const timeout = setTimeout(() => {
+                    audioPlayer.removeEventListener('canplay', onCanPlay);
+                    audioPlayer.removeEventListener('error', onError);
+                    sourceIndex++;
+                    trySource();
+                }, 15000);
+
+                audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
+                audioPlayer.addEventListener('error', onError, { once: true });
+                audioPlayer.src = source.url;
+                audioPlayer.load();
             };
 
             trySource();
