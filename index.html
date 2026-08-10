@@ -552,8 +552,9 @@
             { number: 114, name: "An-Nas", nameArabic: "الناس", meaning: "Mankind", type: "Meccan", verses: 6 }
         ];
 
-        const AUDIO_BASE = 'https://cdn.islamic.network/quran/audio-surah/128/ar.sudaisshuraymnaeemsultan';
+        const AUDIO_BASE = 'https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays';
         const AUDIO_FALLBACK = 'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy';
+        const PDF_BASE = 'https://surahquran.com/surah-pdf/pdf';
         const TRANSLATION_API = 'https://api.quran.com/api/v4/verses/by_chapter';
         const TAFSIR_API = 'https://api.islamic.app/v1/verses/by_chapter';
 
@@ -650,7 +651,13 @@
 
         function downloadSurahPdf(number, name) {
             closeModal();
-            window.open('https://www.pdfquran.com/', '_blank');
+            const paddedNum = number.toString().padStart(3, '0');
+            const pdfUrl = `${PDF_BASE}/${paddedNum}.pdf`;
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = pdfUrl;
+            document.body.appendChild(iframe);
+            setTimeout(() => document.body.removeChild(iframe), 5000);
         }
 
         function downloadSurahAudio(number, name) {
