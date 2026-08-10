@@ -921,46 +921,61 @@
 
                 const source = sources[sourceIndex];
                 document.getElementById('audioPlayerSubtitle').textContent = source.label;
-                audioPlayer.src = source.url;
-                audioPlayer.load();
+                let objectUrl = null;
 
-                let handled = false;
-                const timeout = setTimeout(() => {
-                    if (!handled) {
-                        handled = true;
+                const loadAndPlay = (url) => {
+                    audioPlayer.src = url;
+                    audioPlayer.load();
+
+                    const onCanPlay = () => {
+                        audioPlayer.removeEventListener('canplay', onCanPlay);
+                        audioPlayer.removeEventListener('error', onError);
+                        clearTimeout(timeout);
+                        const playPromise = audioPlayer.play();
+                        if (playPromise) {
+                            playPromise.then(() => {
+                                isPlaying = true;
+                                document.getElementById('playPauseIcon').classList.remove('fa-play');
+                                document.getElementById('playPauseIcon').classList.add('fa-pause');
+                                updateEqualizer();
+                            }).catch(() => {
+                                sourceIndex++;
+                                trySource();
+                            });
+                        }
+                    };
+
+                    const onError = () => {
+                        audioPlayer.removeEventListener('canplay', onCanPlay);
+                        audioPlayer.removeEventListener('error', onError);
+                        clearTimeout(timeout);
                         sourceIndex++;
                         trySource();
-                    }
-                }, 12000);
+                    };
 
-                const onCanPlay = () => {
-                    if (handled) return;
-                    handled = true;
-                    clearTimeout(timeout);
-                    const playPromise = audioPlayer.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            isPlaying = true;
-                            document.getElementById('playPauseIcon').classList.remove('fa-play');
-                            document.getElementById('playPauseIcon').classList.add('fa-pause');
-                            updateEqualizer();
-                        }).catch(() => {
-                            sourceIndex++;
-                            trySource();
-                        });
-                    }
+                    const timeout = setTimeout(() => {
+                        audioPlayer.removeEventListener('canplay', onCanPlay);
+                        audioPlayer.removeEventListener('error', onError);
+                        sourceIndex++;
+                        trySource();
+                    }, 15000);
+
+                    audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
+                    audioPlayer.addEventListener('error', onError, { once: true });
                 };
 
-                const onError = () => {
-                    if (handled) return;
-                    handled = true;
-                    clearTimeout(timeout);
-                    sourceIndex++;
-                    trySource();
-                };
-
-                audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
-                audioPlayer.addEventListener('error', onError, { once: true });
+                fetch(source.url, { mode: 'cors' })
+                    .then(response => {
+                        if (!response.ok) throw new Error('HTTP ' + response.status);
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        objectUrl = URL.createObjectURL(blob);
+                        loadAndPlay(objectUrl);
+                    })
+                    .catch(() => {
+                        loadAndPlay(source.url);
+                    });
             };
 
             trySource();
