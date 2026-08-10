@@ -576,6 +576,7 @@
         const SEERAH_API = 'https://public.api.ihsandeen.com/api/events';
 
         function createSurahCard(surah) {
+            const safeName = surah.name.replace(/'/g, "\\'");
             return `<div class="surah-card">
                 <div class="surah-header">
                     <div class="surah-number">${surah.number}</div>
@@ -587,25 +588,25 @@
                     <div class="surah-meaning">${surah.meaning}</div>
                 </div>
                 <div class="surah-actions">
-                    <button class="action-btn download" onclick="showDownloadOptions(${surah.number}, '${surah.name}')" title="Download Surah">
+                    <button class="action-btn download" onclick="showDownloadOptions(${surah.number}, '${safeName}')" title="Download Surah">
                         <i class="fas fa-download"></i><span>Download</span>
                     </button>
-                    <button class="action-btn tafsir" onclick="viewTafsir(${surah.number}, '${surah.name}')" title="View Tafsir">
+                    <button class="action-btn tafsir" onclick="viewTafsir(${surah.number}, '${safeName}')" title="View Tafsir">
                         <i class="fas fa-book-open"></i><span>Tafsir</span>
                     </button>
-                    <button class="action-btn translation" onclick="viewTranslation(${surah.number}, '${surah.name}')" title="View Translation">
+                    <button class="action-btn translation" onclick="viewTranslation(${surah.number}, '${safeName}')" title="View Translation">
                         <i class="fas fa-language"></i><span>Translation</span>
                     </button>
-                    <button class="action-btn meaning" onclick="viewMeaning(${surah.number}, '${surah.name}')" title="View Meaning">
+                    <button class="action-btn meaning" onclick="viewMeaning(${surah.number}, '${safeName}')" title="View Meaning">
                         <i class="fas fa-info-circle"></i><span>Meaning</span>
                     </button>
-                    <button class="action-btn audio" onclick="playSurah(${surah.number}, '${surah.name}')" title="Play Audio">
+                    <button class="action-btn audio" onclick="playSurah(${surah.number}, '${safeName}')" title="Play Audio">
                         <i class="fas fa-play"></i><span>Play</span>
                     </button>
-                    <button class="action-btn hadith" onclick="viewHadith(${surah.number}, '${surah.name}')" title="View Hadiths">
+                    <button class="action-btn hadith" onclick="viewHadith(${surah.number}, '${safeName}')" title="View Hadiths">
                         <i class="fas fa-book"></i><span>Hadith</span>
                     </button>
-                    <button class="action-btn seerah" onclick="viewSeerah(${surah.number}, '${surah.name}')" title="Prophet's Story">
+                    <button class="action-btn seerah" onclick="viewSeerah(${surah.number}, '${safeName}')" title="Prophet's Story">
                         <i class="fas fa-star-and-crescent"></i><span>Seerah</span>
                     </button>
                 </div>
@@ -613,7 +614,7 @@
                     <button onclick="toggleBookmark(${surah.number})" id="bookmark-${surah.number}" title="Bookmark" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
                         <i class="fas fa-bookmark"></i> <span>Save</span>
                     </button>
-                    <button onclick="shareSurah(${surah.number}, '${surah.name}')" title="Share" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
+                    <button onclick="shareSurah(${surah.number}, '${safeName}')" title="Share" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
                         <i class="fas fa-share"></i> <span>Share</span>
                     </button>
                 </div>
