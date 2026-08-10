@@ -884,62 +884,79 @@
 
         let currentSurahNumber = 0;
         let isPlaying = false;
-        let audioReady = false;
         const audioPlayer = document.getElementById('audioPlayer');
 
         function playSurah(number, name) {
             currentSurahNumber = number;
             const paddedNum = number.toString().padStart(3, '0');
-            const primaryUrl = `${AUDIO_BASE}/${paddedNum}.mp3`;
-            const fallbackUrl = `${AUDIO_FALLBACK}/${paddedNum}.mp3`;
-            let useFallback = false;
-            
+            const sources = [
+                { url: `${AUDIO_BASE}/${paddedNum}.mp3`, label: 'Sheikh Abdulrahman Al-Sudais' },
+                { url: `${AUDIO_FALLBACK}/${paddedNum}.mp3`, label: 'Sheikh Mishary Al-Afasy' }
+            ];
+            let sourceIndex = 0;
+
             document.getElementById('audioPlayerTitle').textContent = `Surah ${name}`;
-            document.getElementById('audioPlayerSubtitle').textContent = 'Sheikh Abdulrahman Al-Sudais';
+            document.getElementById('audioPlayerSubtitle').textContent = sources[0].label;
             document.getElementById('audioPlayerBar').classList.add('active');
             document.body.classList.add('audio-player-active');
-            
             document.getElementById('progressFill').style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
             document.getElementById('totalTime').textContent = '0:00';
-            
+
             audioPlayer.pause();
-            audioReady = false;
-            
-            const attemptPlay = (url) => {
-                audioPlayer.src = url;
-                audioPlayer.load();
-                
-                const playPromise = audioPlayer.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        isPlaying = true;
-                        document.getElementById('playPauseIcon').classList.remove('fa-play');
-                        document.getElementById('playPauseIcon').classList.add('fa-pause');
-                        updateEqualizer();
-                    }).catch(error => {
-                        console.log('Play failed:', error);
-                        if (!useFallback) {
-                            useFallback = true;
-                            attemptPlay(fallbackUrl);
-                        } else {
-                            showAudioError('Unable to play audio. Tap again or check connection.');
-                        }
-                    });
-                }
-            };
-            
-            const onAudioError = () => {
-                if (!useFallback) {
-                    useFallback = true;
-                    attemptPlay(fallbackUrl);
-                } else {
+            audioPlayer.removeAttribute('src');
+
+            const trySource = () => {
+                if (sourceIndex >= sources.length) {
                     showAudioError('Unable to load audio. Try again later.');
+                    return;
                 }
+
+                const source = sources[sourceIndex];
+                document.getElementById('audioPlayerSubtitle').textContent = source.label;
+                audioPlayer.src = source.url;
+                audioPlayer.load();
+
+                let handled = false;
+                const timeout = setTimeout(() => {
+                    if (!handled) {
+                        handled = true;
+                        sourceIndex++;
+                        trySource();
+                    }
+                }, 12000);
+
+                const onCanPlay = () => {
+                    if (handled) return;
+                    handled = true;
+                    clearTimeout(timeout);
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            isPlaying = true;
+                            document.getElementById('playPauseIcon').classList.remove('fa-play');
+                            document.getElementById('playPauseIcon').classList.add('fa-pause');
+                            updateEqualizer();
+                        }).catch(() => {
+                            sourceIndex++;
+                            trySource();
+                        });
+                    }
+                };
+
+                const onError = () => {
+                    if (handled) return;
+                    handled = true;
+                    clearTimeout(timeout);
+                    sourceIndex++;
+                    trySource();
+                };
+
+                audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
+                audioPlayer.addEventListener('error', onError, { once: true });
             };
-            
-            audioPlayer.addEventListener('error', onAudioError, { once: true });
-            attemptPlay(primaryUrl);
+
+            trySource();
         }
 
         function showAudioError(message) {
