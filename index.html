@@ -238,7 +238,7 @@
         .surah-name-english { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
         .surah-meaning { font-size: 1rem; color: var(--text-secondary); font-style: italic; }
         
-        .surah-actions { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 20px; }
+        .surah-actions { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 20px; }
         .action-btn { 
             padding: 10px 8px; border: none; border-radius: 8px; font-family: inherit; 
             font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; 
@@ -251,6 +251,7 @@
         .action-btn.meaning { background: #2d4a5a; color: var(--text-primary); }
         .action-btn.audio { background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%); color: var(--background); }
         .action-btn.hadith { background: #5a2d5a; color: var(--text-primary); }
+        .action-btn.seerah { background: #2d5a5a; color: var(--text-primary); }
         .action-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
@@ -299,6 +300,7 @@
             .surah-actions { grid-template-columns: repeat(3, 1fr); }
             .action-btn.meaning { grid-column: span 3; }
             .action-btn.hadith { grid-column: span 3; }
+            .action-btn.seerah { grid-column: span 3; }
             .download-options { grid-template-columns: 1fr; }
             .full-download-options { grid-template-columns: 1fr; }
             .ad-banner { padding: 10px; }
@@ -351,6 +353,17 @@
             </div>
         </div>
 
+        <div style="max-width:600px;margin:0 auto 20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button class="action-btn" onclick="filterByType('all')" id="filterAll" style="flex:1;min-width:120px;padding:12px;background:var(--primary);color:var(--text-primary);">
+                <i class="fas fa-list"></i><span>All</span>
+            </button>
+            <button class="action-btn" onclick="filterByType('Meccan')" id="filterMeccan" style="flex:1;min-width:120px;padding:12px;background:var(--card-bg);color:var(--text-secondary);border:1px solid var(--border-color);">
+                <i class="fas fa-moon"></i><span>Meccan</span>
+            </button>
+            <button class="action-btn" onclick="filterByType('Medinan')" id="filterMedinan" style="flex:1;min-width:120px;padding:12px;background:var(--card-bg);color:var(--text-secondary);border:1px solid var(--border-color);">
+                <i class="fas fa-city"></i><span>Medinan</span>
+            </button>
+        </div>
         <div class="search-container">
             <i class="fas fa-search search-icon"></i>
             <input type="text" class="search-input" id="searchInput" placeholder="Search surahs by name..." oninput="searchSurahs(this.value)">
@@ -560,6 +573,7 @@
         const TRANSLATION_API = 'https://api.quran.com/api/v4/verses/by_chapter';
         const TAFSIR_API = 'https://api.islamic.app/v1/verses/by_chapter';
         const HADITH_API = 'https://ummahapi.com/api/hadith';
+        const SEERAH_API = 'https://public.api.ihsandeen.com/api/events';
 
         function createSurahCard(surah) {
             return `<div class="surah-card">
@@ -585,14 +599,63 @@
                     <button class="action-btn meaning" onclick="viewMeaning(${surah.number}, '${surah.name}')" title="View Meaning">
                         <i class="fas fa-info-circle"></i><span>Meaning</span>
                     </button>
-                    <button class="action-btn audio" onclick="playSurah(${surah.number}, '${surah.name}')" title="Play Audio - Sheikh Sudais">
+                    <button class="action-btn audio" onclick="playSurah(${surah.number}, '${surah.name}')" title="Play Audio">
                         <i class="fas fa-play"></i><span>Play</span>
                     </button>
                     <button class="action-btn hadith" onclick="viewHadith(${surah.number}, '${surah.name}')" title="View Hadiths">
                         <i class="fas fa-book"></i><span>Hadith</span>
                     </button>
+                    <button class="action-btn seerah" onclick="viewSeerah(${surah.number}, '${surah.name}')" title="Prophet's Story">
+                        <i class="fas fa-star-and-crescent"></i><span>Seerah</span>
+                    </button>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                    <button onclick="toggleBookmark(${surah.number})" id="bookmark-${surah.number}" title="Bookmark" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
+                        <i class="fas fa-bookmark"></i> <span>Save</span>
+                    </button>
+                    <button onclick="shareSurah(${surah.number}, '${surah.name}')" title="Share" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
+                        <i class="fas fa-share"></i> <span>Share</span>
+                    </button>
                 </div>
             </div>`;
+        }
+
+        let currentFilter = 'all';
+
+        function filterByType(type) {
+            currentFilter = type;
+            document.querySelectorAll('[id^="filter"]').forEach(btn => {
+                btn.style.background = 'var(--card-bg)';
+                btn.style.color = 'var(--text-secondary)';
+                btn.style.border = '1px solid var(--border-color)';
+            });
+            const activeBtn = document.getElementById(type === 'all' ? 'filterAll' : type === 'Meccan' ? 'filterMeccan' : 'filterMedinan');
+            if (activeBtn) {
+                activeBtn.style.background = 'var(--primary)';
+                activeBtn.style.color = 'var(--text-primary)';
+                activeBtn.style.border = 'none';
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            let filtered = surahs;
+
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(surah => surah.type === currentFilter);
+            }
+
+            if (searchTerm !== '') {
+                filtered = filtered.filter(surah =>
+                    surah.name.toLowerCase().includes(searchTerm) ||
+                    surah.nameArabic.includes(searchTerm) ||
+                    surah.meaning.toLowerCase().includes(searchTerm) ||
+                    surah.number.toString() === searchTerm
+                );
+            }
+
+            renderSurahs(filtered);
         }
 
         function renderSurahs(surahList) {
@@ -605,15 +668,7 @@
         }
 
         function searchSurahs(query) {
-            const searchTerm = query.toLowerCase().trim();
-            if (searchTerm === '') { renderSurahs(surahs); return; }
-            const filtered = surahs.filter(surah => 
-                surah.name.toLowerCase().includes(searchTerm) || 
-                surah.nameArabic.includes(searchTerm) || 
-                surah.meaning.toLowerCase().includes(searchTerm) || 
-                surah.number.toString() === searchTerm
-            );
-            renderSurahs(filtered);
+            applyFilters();
         }
 
         function showModal(title, content) { 
@@ -625,6 +680,59 @@
         function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
         document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+        function toggleBookmark(number) {
+            let bookmarks = JSON.parse(localStorage.getItem('quranhub_bookmarks') || '[]');
+            const btn = document.getElementById(`bookmark-${number}`);
+            const icon = btn.querySelector('i');
+
+            if (bookmarks.includes(number)) {
+                bookmarks = bookmarks.filter(n => n !== number);
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--text-secondary)';
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+            } else {
+                bookmarks.push(number);
+                btn.style.background = 'rgba(212,168,83,0.2)';
+                btn.style.color = 'var(--accent)';
+                btn.style.borderColor = 'var(--accent)';
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+            }
+
+            localStorage.setItem('quranhub_bookmarks', JSON.stringify(bookmarks));
+        }
+
+        function shareSurah(number, name) {
+            const url = `${window.location.origin}${window.location.pathname}#surah-${number}`;
+            const text = `Surah ${name} - QuranHub`;
+
+            if (navigator.share) {
+                navigator.share({ title: `Surah ${name}`, text, url }).catch(() => {});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
+
+        function loadBookmarks() {
+            const bookmarks = JSON.parse(localStorage.getItem('quranhub_bookmarks') || '[]');
+            bookmarks.forEach(num => {
+                const btn = document.getElementById(`bookmark-${num}`);
+                if (btn) {
+                    btn.style.background = 'rgba(212,168,83,0.2)';
+                    btn.style.color = 'var(--accent)';
+                    btn.style.borderColor = 'var(--accent)';
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                    }
+                }
+            });
+        }
 
         function showDownloadOptions(number, name) {
             const surah = surahs[number - 1];
@@ -819,6 +927,66 @@
                 });
         }
 
+        function generateHadithExplanation(hadith, text, narrator) {
+            const lowerText = text.toLowerCase();
+            const explanations = [];
+
+            if (lowerText.includes('intention') || lowerText.includes('heart') || lowerText.includes('niat')) {
+                explanations.push('This hadith teaches us that the quality of our actions depends on our inner intention. Before doing any good deed, we should sincerely intend to please Allah alone, not to show off or gain worldly recognition.');
+            }
+            if (lowerText.includes('prayer') || lowerText.includes('salah') || lowerText.includes('salat')) {
+                explanations.push('Prayer is the foundation of our relationship with Allah. This reminds us to establish prayer regularly, on time, and with proper concentration, as it is the first deed we will be judged for on the Day of Judgment.');
+            }
+            if (lowerText.includes('charity') || lowerText.includes('poor') || lowerText.includes('orphan') || lowerText.includes('give')) {
+                explanations.push('Charity is not just about money - it includes any act of kindness. This teaches us to be generous, help those in need, and understand that giving purifies our wealth and soul.');
+            }
+            if (lowerText.includes('patience') || lowerText.includes('sabr')) {
+                explanations.push('Patience is a quality Allah loves. This hadith reminds us to remain patient during hardships, trusting that Allah is with those who persevere, and that every difficulty has wisdom behind it.');
+            }
+            if (lowerText.includes('good') || lowerText.includes('kindness') || lowerText.includes('mercy') || lowerText.includes('neighbor')) {
+                explanations.push('Islam emphasizes treating others with kindness and mercy. This teaches us to be compassionate in our daily interactions, to help our neighbors, and to spread goodness wherever we go.');
+            }
+            if (lowerText.includes('knowledge') || lowerText.includes('learn') || lowerText.includes('seek') || lowerText.includes('teach')) {
+                explanations.push('Seeking knowledge is an obligation in Islam. This hadith encourages us to continuously learn, share beneficial knowledge, and understand that learning brings us closer to Allah and benefits others.');
+            }
+            if (lowerText.includes('parents') || lowerText.includes('mother') || lowerText.includes('father')) {
+                explanations.push('Respecting and serving our parents is one of the most beloved deeds to Allah. This teaches us to be patient with them, honor them, and recognize their immense sacrifice for us.');
+            }
+            if (lowerText.includes('smile') || lowerText.includes('greet') || lowerText.includes('peace') || lowerText.includes('salam')) {
+                explanations.push('Simple acts of kindness like smiling and greeting others with peace are highly valued in Islam. This reminds us to spread positivity, build bridges of friendship, and create harmony in our communities.');
+            }
+            if (lowerText.includes('forgive') || lowerText.includes('reconcile') || lowerText.includes('conflict')) {
+                explanations.push('Forgiveness is a powerful act of worship. This teaches us to let go of grudges, reconcile with others, and understand that forgiving others leads to Allah's mercy and inner peace.');
+            }
+            if (lowerText.includes('truth') || lowerText.includes('honest') || lowerText.includes('lie')) {
+                explanations.push('Honesty and truthfulness are core Islamic values. This reminds us to always speak the truth, keep our promises, and maintain integrity in all our dealings, even when it is difficult.');
+            }
+            if (lowerText.includes('gratitude') || lowerText.includes('thankful') || lowerText.includes('shukr')) {
+                explanations.push('Gratitude is the key to a contented life. This teaches us to appreciate Allah's blessings, thank Him regularly, and express gratitude to people who help us.');
+            }
+            if (lowerText.includes('prostration') || lowerText.includes('quran') || lowerText.includes('read') || lowerText.includes('recite')) {
+                explanations.push('The Quran is Allah's guidance for humanity. This reminds us to read, reflect upon, and implement the Quran in our daily lives, as it contains wisdom, healing, and guidance for all aspects of life.');
+            }
+            if (lowerText.includes('hell') || lowerText.includes('fire') || lowerText.includes('punishment')) {
+                explanations.push('This hadith serves as a reminder of the Hereafter and accountability. It motivates us to avoid sin, seek Allah's forgiveness, and prepare for the eternal life through righteous actions.');
+            }
+            if (lowerText.includes('paradise') || lowerText.includes('heaven') || lowerText.includes('jannah')) {
+                explanations.push('The promise of Paradise inspires us to do good deeds. This teaches us to strive for Allah's pleasure, perform righteous actions, and maintain hope in Allah's infinite mercy.');
+            }
+            if (lowerText.includes('allah') && lowerText.includes('love')) {
+                explanations.push('Allah loves those who do good. This reminds us to do righteous deeds sincerely, knowing that Allah's love and mercy are greater than any worldly pleasure.');
+            }
+
+            if (explanations.length === 0) {
+                explanations.push('This hadith contains timeless wisdom from the Prophet Muhammad (peace be upon him). Reflect on its meaning and apply its lessons in your daily life to strengthen your faith and character.');
+                if (hadith.grade === 'Sahih') {
+                    explanations.push('As a Sahih hadith, this narration is authentic and provides strong guidance for Muslims. Following this teaching brings great reward and draws us closer to the Prophet's exemplary character.');
+                }
+            }
+
+            return explanations.join(' ');
+        }
+
         function viewHadith(number, name) {
             const surah = surahs[number - 1];
             const content = `
@@ -873,6 +1041,7 @@
                         const text = hadith.english.replace(/Narrated [^:]+: /, '');
                         const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
 
+                        const explanation = generateHadithExplanation(hadith, text, narrator);
                         hadithContent += `<div style="margin-bottom:20px;padding:15px;background:rgba(26,71,42,0.3);border-radius:12px;border-left:4px solid ${gradeColor};">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:5px;">
                                 <span style="color:var(--accent);font-weight:700;font-size:0.9rem;">${hadith.collection_name} #${hadith.hadithnumber}</span>
@@ -880,7 +1049,11 @@
                             </div>
                             <div style="margin-bottom:10px;color:var(--text-secondary);font-size:0.9rem;"><strong>Narrator:</strong> ${narrator}</div>
                             <div class="arabic-text" style="text-align:right;margin-bottom:10px;font-size:1.1rem;">${hadith.arabic}</div>
-                            <div style="color:var(--text-primary);line-height:1.7;">${text}</div>
+                            <div style="color:var(--text-primary);line-height:1.7;margin-bottom:10px;"><strong>Meaning:</strong> ${text}</div>
+                            <div style="padding:10px;background:rgba(212,168,83,0.1);border-radius:8px;border-left:3px solid var(--accent);">
+                                <strong style="color:var(--accent);">Real-Life Lesson:</strong>
+                                <p style="margin-top:5px;color:var(--text-secondary);line-height:1.6;font-size:0.95rem;">${explanation}</p>
+                            </div>
                         </div>`;
                     });
 
@@ -947,6 +1120,38 @@
                 });
                 alert('Started downloading all 114 surahs! Please allow popups for this site.');
             }
+        }
+
+        function loadDailyHadith() {
+            const collections = ['bukhari', 'muslim', 'abudawud'];
+            const randomCol = collections[Math.floor(Math.random() * collections.length)];
+            const randomNum = Math.floor(Math.random() * 100) + 1;
+
+            fetch(`${HADITH_API}/${randomCol}/${randomNum}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const hadith = data.data;
+                        const narratorMatch = hadith.english.match(/Narrated ([^:]+):/);
+                        const narrator = narratorMatch ? narratorMatch[1].trim() : 'Unknown';
+                        const text = hadith.english.replace(/Narrated [^:]+: /, '');
+                        const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
+
+                        document.getElementById('dailyHadithContent').innerHTML = `
+                            <div style="margin-bottom:10px;color:var(--text-secondary);font-size:0.9rem;"><strong>Narrator:</strong> ${narrator}</div>
+                            <div class="arabic-text" style="text-align:right;margin-bottom:10px;font-size:1.1rem;">${hadith.arabic}</div>
+                            <div style="color:var(--text-primary);line-height:1.7;margin-bottom:10px;">${text}</div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">
+                                <span style="color:var(--accent);font-size:0.85rem;">${hadith.collection_name} #${hadith.hadithnumber}</span>
+                                <span style="background:${gradeColor};color:#fff;padding:2px 10px;border-radius:12px;font-size:0.8rem;font-weight:600;">${hadith.grade}</span>
+                            </div>
+                            <p style="margin-top:10px;color:var(--text-secondary);font-size:0.85rem;"><em>Tap "Hadith" on any surah to explore more</em></p>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('dailyHadithContent').innerHTML = '<p style="color:var(--text-secondary);">Unable to load daily hadith. Please try again later.</p>';
+                });
         }
 
         function downloadFullQuranText() {
@@ -1253,6 +1458,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderSurahs(surahs);
             loadTheme();
+            loadDailyHadith();
+            loadBookmarks();
             (adsbygoogle = window.adsbygoogle || []).push({});
         });
     </script>
