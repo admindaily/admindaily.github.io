@@ -779,17 +779,38 @@
             const surah = surahs[number - 1];
             const content = `
                 <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
-                <h3 style="color:var(--accent);margin-bottom:15px;">${surah.name}</h3>
-                <div class="meaning-text">
-                    <p><strong>Meaning:</strong> ${surah.meaning}</p>
-                    <p><strong>Type:</strong> ${surah.type}</p>
-                    <p><strong>Number of Verses:</strong> ${surah.verses}</p>
-                    <p><strong>Surah Number:</strong> ${surah.number}</p>
-                </div>
-                <div style="margin-top:20px;padding:20px;background:rgba(212,168,83,0.1);border-radius:12px;border-left:4px solid var(--accent);">
-                    <p style="font-style:italic;line-height:1.8;">This is Surah ${surah.number}, ${surah.name}, also known as "${surah.nameArabic}". It is a ${surah.type.toLowerCase()} chapter containing ${surah.verses} verses.</p>
-                </div>`;
+                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
+                <div id="meaningContent" style="padding:15px;background:rgba(212,168,83,0.1);border-radius:8px;"><p>Loading meaning...</p></div>`;
             showModal(`Meaning - Surah ${name}`, content);
+
+            fetch(`${TRANSLATION_API}/${number}?translations=20&per_page=300`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.verses && data.verses.length > 0) {
+                        let meaningContent = `<div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>`;
+                        meaningContent += `<p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>`;
+
+                        let verseList = '<div style="max-height:400px;overflow-y:auto;">';
+                        const showCount = data.verses.length;
+                        for (let i = 0; i < showCount; i++) {
+                            const v = data.verses[i];
+                            const translation = v.translations && v.translations.length > 0 ? v.translations[0].text : '';
+                            verseList += `<div style="margin-bottom:15px;padding:10px;background:rgba(212,168,83,0.1);border-radius:8px;"><strong style="color:var(--accent);">${v.verse_key}:</strong> ${translation}</div>`;
+                        }
+                        verseList += '</div>';
+                        meaningContent += verseList;
+                        document.getElementById('modalBody').innerHTML = meaningContent;
+                    }
+                })
+                .catch(error => {
+                    console.log('Meaning fetch error:', error);
+                    document.getElementById('modalBody').innerHTML = `
+                        <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
+                        <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - ${surah.meaning} (${surah.type})</p>
+                        <div style="padding:15px;background:rgba(212,168,83,0.1);border-radius:8px;">
+                            <p>In the name of Allah, the Most Merciful, the Especially Merciful. Praise be to Allah, Lord of all the worlds.</p>
+                        </div>`;
+                });
         }
 
         function showFullQuranOptions() {
