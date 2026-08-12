@@ -947,11 +947,10 @@
                     verses.forEach(v => {
                         const vn = v.verse_key ? v.verse_key.split(':')[1] : v.verse_number;
                         const txt = (v.text_uthmani || '').trim();
-                        html += `<div class="vis-verse" style="margin-bottom:18px;font-size:1.9rem;line-height:2.4;font-weight:bold;">`
-                            + `<span title="Verse ${vn}" style="display:inline-block;min-width:1.5em;text-align:center;font-size:0.9rem;background:rgba(212,168,83,0.25);border-radius:50%;margin-left:6px;color:var(--accent);">${vn}</span>`
-                            + `${txt}</div>`;
+                        html += `${txt} <sup title="Verse ${vn}" style="font-size:0.55em;vertical-align:super;color:var(--accent);margin-left:2px;">${vn}</sup> `;
                     });
-                    document.getElementById('visContent').innerHTML = html;
+                    document.getElementById('visContent').innerHTML =
+                        '<div style="text-align:right;line-height:2.2;font-size:1.6rem;font-weight:bold;">' + html + '</div>';
                 })
                 .catch(err => {
                     console.log('Visual Quran fetch error:', err);
