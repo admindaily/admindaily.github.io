@@ -215,7 +215,7 @@
         
         .surah-card {
             background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px;
-            transition: all 0.3s ease; position: relative; overflow: hidden;
+            transition: all 0.3s ease; position: relative; overflow: hidden; cursor: pointer;
         }
         .surah-card::before { 
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; 
@@ -635,9 +635,7 @@
         const SEERAH_API = 'https://public.api.ihsandeen.com/api/events';
 
         function createSurahCard(surah, prefix) {
-            const safeName = surah.name.replace(/'/g, "\\'");
-            const bId = 'bookmark-' + (prefix || '') + surah.number;
-            return `<div class="surah-card">
+            return `<div class="surah-card" onclick="viewVisualQuran(${surah.number})">
                 <div class="surah-header">
                     <div class="surah-number">${surah.number}</div>
                     <div class="surah-type">${surah.type} • ${surah.verses} verses</div>
@@ -646,40 +644,6 @@
                     <div class="surah-name-arabic">${surah.nameArabic}</div>
                     <div class="surah-name-english">${surah.name}</div>
                     <div class="surah-meaning">${surah.meaning}</div>
-                </div>
-                <div class="surah-actions">
-                    <button class="action-btn download" onclick="showDownloadOptions(${surah.number}, '${safeName}')" title="Download Surah">
-                        <i class="fas fa-download"></i><span>Download</span>
-                    </button>
-                    <button class="action-btn tafsir" onclick="viewTafsir(${surah.number}, '${safeName}')" title="View Tafsir">
-                        <i class="fas fa-book-open"></i><span>Tafsir</span>
-                    </button>
-                    <button class="action-btn translation" onclick="viewTranslation(${surah.number}, '${safeName}')" title="View Translation">
-                        <i class="fas fa-language"></i><span>Translation</span>
-                    </button>
-                    <button class="action-btn meaning" onclick="viewMeaning(${surah.number}, '${safeName}')" title="View Meaning">
-                        <i class="fas fa-info-circle"></i><span>Meaning</span>
-                    </button>
-                    <button class="action-btn audio" onclick="playSurah(${surah.number}, '${safeName}')" title="Play Audio">
-                        <i class="fas fa-play"></i><span>Play</span>
-                    </button>
-                    <button class="action-btn read" onclick="viewVisualQuran(${surah.number}, '${safeName}')" title="Read / Visual Quran">
-                        <i class="fas fa-book-reader"></i><span>Read</span>
-                    </button>
-                    <button class="action-btn hadith" onclick="viewHadith(${surah.number}, '${safeName}')" title="View Hadiths">
-                        <i class="fas fa-book"></i><span>Hadith</span>
-                    </button>
-                    <button class="action-btn seerah" onclick="viewSeerah(${surah.number}, '${safeName}')" title="Prophet's Story">
-                        <i class="fas fa-star-and-crescent"></i><span>Seerah</span>
-                    </button>
-                </div>
-                <div style="display:flex;gap:8px;margin-top:10px;">
-                    <button onclick="toggleBookmark(${surah.number}, '${prefix || ''}')" id="${bId}" title="Save" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
-                        <i class="far fa-bookmark"></i> <span>Save</span>
-                    </button>
-                    <button onclick="shareSurah(${surah.number}, '${safeName}')" title="Share" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
-                        <i class="fas fa-share"></i> <span>Share</span>
-                    </button>
                 </div>
             </div>`;
         }
@@ -928,20 +892,34 @@
         function viewTranslation(number, name) { showVersesModal(number, name, 'Translation'); }
         function viewMeaning(number, name) { showVersesModal(number, name, 'Meaning'); }
 
-        function viewVisualQuran(number, name) {
+        function viewVisualQuran(number) {
             const surah = surahs[number - 1];
             if (!surah) return;
+            const safeName = surah.name.replace(/'/g, "\\'");
+            const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
+            const isBookmarked = bookmarks.includes(number);
             const intro = `
-                <div class="arabic-text" style="text-align:center;margin-bottom:20px;font-size:2.2rem;">${surah.nameArabic}</div>
-                <p style="color:var(--text-secondary);margin-bottom:12px;text-align:center;font-size:1rem;"><strong>Surah ${name}</strong> — ${surah.meaning} · ${surah.type} · ${surah.verses} verses</p>`;
-            showModal(`Surah ${name}`, intro + '<div id="visContent" style="max-height:62vh;overflow-y:auto;padding:12px 8px;text-align:right;font-family:var(--arabic-font);;"><p style="color:var(--text-secondary);">Loading verses…</p></div>');
+                <div class="arabic-text" style="text-align:center;margin-bottom:18px;font-size:2.2rem;">${surah.nameArabic}</div>
+                <p style="color:var(--text-secondary);margin-bottom:14px;text-align:center;font-size:1rem;"><strong>Surah ${surah.name}</strong> — ${surah.meaning} · ${surah.type} · ${surah.verses} verses</p>
+                <div class="vis-actions" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px;">
+                    <button class="action-btn hadith" onclick="viewHadith(${number}, '${safeName}')" title="Hadith"><i class="fas fa-book"></i>Hadith</button>
+                    <button class="action-btn seerah" onclick="viewSeerah(${number}, '${safeName}')" title="Seerah"><i class="fas fa-star-and-crescent"></i>Seerah</button>
+                    <button class="action-btn translation" onclick="viewTranslation(${number}, '${safeName}')" title="Translation"><i class="fas fa-language"></i>Translation</button>
+                    <button class="action-btn meaning" onclick="viewMeaning(${number}, '${safeName}')" title="Meaning"><i class="fas fa-info-circle"></i>Meaning</button>
+                    <button class="action-btn tafsir" onclick="viewTafsir(${number}, '${safeName}')" title="Tafsir"><i class="fas fa-book-open"></i>Tafsir</button>
+                    <button class="action-btn download" onclick="showDownloadOptions(${number}, '${safeName}')" title="Download"><i class="fas fa-download"></i>Download</button>
+                    <button class="action-btn audio" onclick="playSurah(${number}, '${safeName}')" title="Play Audio"><i class="fas fa-play"></i>Play</button>
+                    <button class="action-btn" id="bookmark-mbsave${number}" onclick="toggleBookmark(${number}, 'mbsave')" title="Save"${isBookmarked ? ' style="background:rgba(212,168,83,0.2);color:var(--accent);"' : ''}>${isBookmarked ? '<i class="fas fa-bookmark"></i>' : '<i class="far fa-bookmark"></i>'} Save</button>
+                    <button class="action-btn" onclick="shareSurah(${number}, '${safeName}')" title="Share"><i class="fas fa-share"></i>Share</button>
+                </div>`;
+            showModal(`Surah ${surah.name}`, intro + '<div id="visContent" style="max-height:50vh;overflow-y:auto;padding:12px 8px;text-align:right;font-family:var(--arabic-font);"><p style="color:var(--text-secondary);">Loading verses…</p></div>');
 
             fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`)
                 .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(data => {
                     const verses = data.verses || [];
                     if (!verses.length) {
-                        document.getElementById('visContent').innerHTML = '<p style="color:var(--text-secondary);margin-top:10px;"><em>No verses loaded.</em></p>';
+                        document.getElementById('visContent').innerHTML = '<p style="color:var(--text-secondary);margin-top:10px;"><em>No verses found.</em> <a href="https://quran.com/' + number + '" target="_blank" style="color:var(--accent);">View on Quran.com</a></em></p>';
                         return;
                     }
                     let html = '';
@@ -951,7 +929,7 @@
                         html += `${txt} <sup title="Verse ${vn}" style="font-size:0.55em;vertical-align:super;color:var(--accent);margin-left:2px;">${vn}</sup> `;
                     });
                     document.getElementById('visContent').innerHTML =
-                        '<div style="text-align:right;line-height:2.2;font-size:1.8rem;font-weight:bold;font-family:var(--arabic-font);">' + html + '</div>';
+                        '<div style="text-align:right;line-height:2.2;font-size:1.8rem;font-weight:normal;font-family:var(--arabic-font);">' + html + '</div>';
                 })
                 .catch(err => {
                     console.log('Visual Quran fetch error:', err);
