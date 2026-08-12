@@ -239,7 +239,7 @@
         .surah-name-english { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
         .surah-meaning { font-size: 1rem; color: var(--text-secondary); font-style: italic; }
         
-        .surah-actions { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 20px; }
+        .surah-actions { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-top: 20px; }
         .action-btn { 
             padding: 10px 8px; border: none; border-radius: 8px; font-family: inherit; 
             font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; 
@@ -253,6 +253,7 @@
         .action-btn.audio { background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%); color: var(--background); }
         .action-btn.hadith { background: #5a2d5a; color: var(--text-primary); }
         .action-btn.seerah { background: #2d5a5a; color: var(--text-primary); }
+        .action-btn.read { background: var(--accent); color: var(--background); }
         .action-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
@@ -661,6 +662,9 @@
                     <button class="action-btn audio" onclick="playSurah(${surah.number}, '${safeName}')" title="Play Audio">
                         <i class="fas fa-play"></i><span>Play</span>
                     </button>
+                    <button class="action-btn read" onclick="viewVisualQuran(${surah.number}, '${safeName}')" title="Read / Visual Quran">
+                        <i class="fas fa-book-reader"></i><span>Read</span>
+                    </button>
                     <button class="action-btn hadith" onclick="viewHadith(${surah.number}, '${safeName}')" title="View Hadiths">
                         <i class="fas fa-book"></i><span>Hadith</span>
                     </button>
@@ -922,6 +926,38 @@
 
         function viewTranslation(number, name) { showVersesModal(number, name, 'Translation'); }
         function viewMeaning(number, name) { showVersesModal(number, name, 'Meaning'); }
+
+        function viewVisualQuran(number, name) {
+            const surah = surahs[number - 1];
+            if (!surah) return;
+            const intro = `
+                <div class="arabic-text" style="text-align:center;margin-bottom:20px;font-size:2.2rem;">${surah.nameArabic}</div>
+                <p style="color:var(--text-secondary);margin-bottom:12px;text-align:center;font-size:1rem;"><strong>Surah ${name}</strong> — ${surah.meaning} · ${surah.type} · ${surah.verses} verses</p>`;
+            showModal(`Surah ${name}`, intro + '<div id="visContent" style="max-height:62vh;overflow-y:auto;padding:12px 8px;text-align:right;font-family:\'Noto Naskh Arabic\',\'Amiri\',serif;"><p style="color:var(--text-secondary);">Loading verses…</p></div>');
+
+            fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`)
+                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(data => {
+                    const verses = data.verses || [];
+                    if (!verses.length) {
+                        document.getElementById('visContent').innerHTML = '<p style="color:var(--text-secondary);margin-top:10px;"><em>No verses loaded.</em></p>';
+                        return;
+                    }
+                    let html = '';
+                    verses.forEach(v => {
+                        const vn = v.verse_key ? v.verse_key.split(':')[1] : v.verse_number;
+                        const txt = (v.text_uthmani || '').trim();
+                        html += `<div class="vis-verse" style="margin-bottom:18px;font-size:1.9rem;line-height:2.4;font-weight:bold;">`
+                            + `<span title="Verse ${vn}" style="display:inline-block;min-width:1.5em;text-align:center;font-size:0.9rem;background:rgba(212,168,83,0.25);border-radius:50%;margin-left:6px;color:var(--accent);">${vn}</span>`
+                            + `${txt}</div>`;
+                    });
+                    document.getElementById('visContent').innerHTML = html;
+                })
+                .catch(err => {
+                    console.log('Visual Quran fetch error:', err);
+                    document.getElementById('visContent').innerHTML = '<p style="color:var(--text-secondary);margin-top:10px;"><em>Unable to load verses.</em> <a href="https://quran.com/' + number + '" target="_blank" style="color:var(--accent);">View on Quran.com</a></p>';
+                });
+        }
 
         function generateHadithExplanation(hadith, text, narrator, surahName) {
             const explanations = [];
