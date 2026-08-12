@@ -12,6 +12,10 @@
     <meta name="language" content="English">
     <meta name="revisit-after" content="7 days">
     <meta name="theme-color" content="#1a472a">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="QuranHub">
     
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://quranhub.example.com/">
@@ -366,6 +370,7 @@
     </header>
 
     <main id="home">
+        <div id="offlineBanner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#c62828;color:#fff;padding:10px 20px;border-radius:50px;z-index:9999;font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,0.3);">You are offline — showing cached content</div>
         <section class="hero">
             <h1>القرآن الكريم</h1>
             <p class="hero-verse">
@@ -1750,6 +1755,21 @@
             loadDailyHadith();
             (adsbygoogle = window.adsbygoogle || []).push({});
         });
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch((err) => console.error('SW registration failed:', err));
+      }
+
+      (function(){
+        const banner = document.getElementById('offlineBanner');
+        function update(){
+          if (banner) banner.style.display = navigator.onLine ? 'none' : 'block';
+        }
+        window.addEventListener('online', update);
+        window.addEventListener('offline', update);
+        update();
+      })();
     </script>
 </body>
 </html>
