@@ -255,6 +255,10 @@
         .action-btn.hadith { background: #5a2d5a; color: var(--text-primary); }
         .action-btn.seerah { background: #2d5a5a; color: var(--text-primary); }
         .action-btn.read { background: var(--accent); color: var(--background); }
+        .vis-ayah { display: inline-block; cursor: pointer; border-radius: 4px; transition: background 0.18s ease; }
+        .vis-ayah:hover { background: rgba(212,168,83,0.15); }
+        .vis-ayah.highlight { background: rgba(212,168,83,0.4); }
+        .verse-play-btn { font-size: 0.65rem; }
         .action-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
@@ -604,6 +608,8 @@
         const AUDIO_BASE = 'https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays';
 
         const AUDIO_API = 'https://api.quran.com/api/v4/chapter_recitations';
+        const VERSE_AUDIO_API = 'https://api.quran.com/api/v4/recitations';
+        const VERSE_AUDIO_BASE = 'https://audio.qurancdn.com/';
 
         const RECITERS = [
             { id: 3, name: 'Al-Sudais' },
@@ -776,6 +782,11 @@
                             <h4>Play Audio</h4>
                             <p>Listen Online</p>
                         </div>
+                        <div class="download-option" onclick="playAllVerses(${number}, '${name}')">
+                            <i class="fas fa-play-circle"></i>
+                            <h4>Play All Verses</h4>
+                            <p>Recite all verses</p>
+                        </div>
                         <div class="download-option" onclick="downloadSurahPdf(${number}, '${name}')">
                             <i class="fas fa-file-pdf"></i>
                             <h4>PDF Format</h4>
@@ -831,7 +842,7 @@
                             const tafsir = v.tafsirs && v.tafsirs.length > 0 ? v.tafsirs[0].text : '';
                             const translation = v.translations && v.translations.length > 0 ? v.translations[0].text : '';
                             tafsirText += `<div style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;">`;
-                            tafsirText += `<strong style="color:var(--accent);">${v.verse_key}:</strong> `;
+                            tafsirText += `<button class="verse-play-btn" onclick="playVerse(${number}, ${v.verse_key ? v.verse_key.split(':')[1] : ''})" title="Play verse" style="float:right;margin:0 0 4px 8px;background:var(--accent);color:var(--background);border:none;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;"><i class="fas fa-play" style="font-size:0.65rem;"></i></button><strong style="color:var(--accent);">${v.verse_key}:</strong> `;
                             tafsirText += `<div style="margin-top:5px;color:var(--text-primary);">${translation}</div>`;
                             if (tafsir) {
                                 tafsirText += `<div style="margin-top:8px;color:var(--text-secondary);font-size:0.95rem;line-height:1.6;">${tafsir.substring(0, 600)}${tafsir.length > 600 ? '...' : ''}</div>`;
@@ -873,7 +884,7 @@
                         for (let i = 0; i < data.verses.length; i++) {
                             const v = data.verses[i];
                             const translation = v.translations && v.translations.length > 0 ? v.translations[0].text : '';
-                            verseList += `<div style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;"><strong style="color:var(--accent);">${v.verse_key}:</strong> ${translation}</div>`;
+                            verseList += `<div style="margin-bottom:15px;padding:10px;background:rgba(26,71,42,0.3);border-radius:8px;"><button class="verse-play-btn" onclick="playVerse(${number}, ${v.verse_key ? v.verse_key.split(':')[1] : ''})" title="Play verse" style="float:right;margin:0 0 4px 8px;background:var(--accent);color:var(--background);border:none;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;"><i class="fas fa-play" style="font-size:0.65rem;"></i></button><strong style="color:var(--accent);">${v.verse_key}:</strong> ${translation}</div>`;
                         }
                         verseList += '</div>';
                         document.getElementById('modalBody').innerHTML = intro + verseList;
@@ -908,6 +919,7 @@
                     <button class="action-btn meaning" onclick="viewMeaning(${number}, '${safeName}')" title="Meaning"><i class="fas fa-info-circle"></i>Meaning</button>
                     <button class="action-btn tafsir" onclick="viewTafsir(${number}, '${safeName}')" title="Tafsir"><i class="fas fa-book-open"></i>Tafsir</button>
                     <button class="action-btn download" onclick="showDownloadOptions(${number}, '${safeName}')" title="Download"><i class="fas fa-download"></i>Download</button>
+                    <button class="action-btn audio" onclick="playAllVerses(${number}, '${safeName}')" title="Play All Verses"><i class="fas fa-play-circle"></i>Play All</button>
                     <button class="action-btn audio" onclick="playSurah(${number}, '${safeName}')" title="Play Audio"><i class="fas fa-play"></i>Play</button>
                     <button class="action-btn" id="bookmark-mbsave${number}" onclick="toggleBookmark(${number}, 'mbsave')" title="Save"${isBookmarked ? ' style="background:rgba(212,168,83,0.2);color:var(--accent);"' : ''}>${isBookmarked ? '<i class="fas fa-bookmark"></i>' : '<i class="far fa-bookmark"></i>'} Save</button>
                     <button class="action-btn" onclick="shareSurah(${number}, '${safeName}')" title="Share"><i class="fas fa-share"></i>Share</button>
@@ -926,7 +938,7 @@
                     verses.forEach(v => {
                         const vn = v.verse_key ? v.verse_key.split(':')[1] : v.verse_number;
                         const txt = (v.text_uthmani || '').trim();
-                        html += `${txt} <sup title="Verse ${vn}" style="font-size:0.55em;vertical-align:super;color:var(--accent);margin-left:2px;">${vn}</sup> `;
+                        html += `<span class="vis-ayah" data-vkey="${v.verse_key || (number + ':' + vn)}" onclick="playVerse(${number}, ${vn})" title="Tap to play this verse"><span class="ayah-num" style="font-size:0.6em;vertical-align:super;color:var(--accent);margin-left:2px;">${vn}</span> ${txt}</span> `;
                     });
                     document.getElementById('visContent').innerHTML =
                         '<div style="text-align:right;line-height:2.2;font-size:1.8rem;font-weight:normal;font-family:var(--arabic-font);">' + html + '</div>';
@@ -1000,9 +1012,13 @@
 
         function viewHadith(number, name) {
             const surah = surahs[number - 1];
+            const safeName = name.replace(/'/g, "\\'");
             const content = `
                 <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
                 <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - Related Hadiths</p>
+                <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;">
+                    <button class="action-btn audio" onclick="playSurah(${number}, '${safeName}')" title="Play Recitation"><i class="fas fa-play-circle"></i>Play Recitation</button>
+                </div>
                 <div id="hadithContent" style="padding:15px;background:rgba(90,45,90,0.2);border-radius:8px;"><p>Loading hadiths...</p></div>`;
             showModal(`Hadith - Surah ${name}`, content);
 
@@ -1084,6 +1100,7 @@
 
         function viewSeerah(number, name) {
             const surah = surahs[number - 1];
+            const safeName = name.replace(/'/g, "\\'");
             const seerahEvents = [
                 { title: 'Revelation Context', desc: `Surah ${name} was revealed during a significant period in the Prophet's (PBUH) life. Understanding the Seerah helps us appreciate the divine wisdom behind its revelation.` },
                 { title: "Prophet's Patience", desc: `The Prophet (PBUH) exemplified patience and perseverance when conveying the message of Surah ${name}. His life teaches us to remain steadfast in faith.` },
@@ -1092,7 +1109,10 @@
             
             let content = `
                 <div class="arabic-text" style="text-align:center;margin-bottom:20px;">${surah.nameArabic}</div>
-                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - Prophet's Story & Context</p>`;
+                <p style="color:var(--text-secondary);margin-bottom:20px;"><strong>Surah ${name}</strong> - Prophet's Story & Context</p>
+                <div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px;">
+                    <button class="action-btn audio" onclick="playSurah(${number}, '${safeName}')" title="Play Recitation"><i class="fas fa-play-circle"></i>Play Recitation</button>
+                </div>`;
             
             seerahEvents.forEach(event => {
                 content += `
@@ -1314,6 +1334,87 @@
             audioPlayer.load();
         }
 
+        const verseAudioCache = {};
+        let verseQueue = [];
+        let verseQueueIdx = -1;
+        let verseMode = false;
+
+        function ensureVerseAudio(number) {
+            const cacheKey = currentReciterId + ':' + number;
+            if (verseAudioCache[cacheKey]) return Promise.resolve(verseAudioCache[cacheKey]);
+            return fetch(`${VERSE_AUDIO_API}/${currentReciterId}/by_chapter/${number}?per_page=300`)
+                .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                .then(d => {
+                    const map = {};
+                    (d.audio_files || []).forEach(a => { if (a.verse_key && a.url) map[a.verse_key] = VERSE_AUDIO_BASE + a.url; });
+                    verseAudioCache[cacheKey] = map;
+                    return map;
+                });
+        }
+
+        function clearAyahHighlight() {
+            document.querySelectorAll('#visContent .vis-ayah').forEach(el => el.classList.remove('highlight'));
+        }
+
+        function highlightAyah(verseKey) {
+            document.querySelectorAll('#visContent .vis-ayah').forEach(el => {
+                el.classList.toggle('highlight', el.dataset.vkey === verseKey);
+            });
+        }
+
+        function startVerseQueue(number, queue) {
+            if (!queue.length) return;
+            verseMode = true;
+            verseQueue = queue;
+            verseQueueIdx = 0;
+            highlightAyah(queue[0].key);
+            loadAndPlay(queue[0].url, () => stopVerseMode());
+        }
+
+        function stopVerseMode() {
+            verseMode = false;
+            verseQueue = [];
+            verseQueueIdx = -1;
+            clearAyahHighlight();
+        }
+
+        function advanceVerseQueue() {
+            if (!verseMode || verseQueueIdx < 0) return;
+            if (verseQueueIdx + 1 < verseQueue.length) {
+                verseQueueIdx++;
+                const it = verseQueue[verseQueueIdx];
+                highlightAyah(it.key);
+                loadAndPlay(it.url, () => stopVerseMode());
+            } else {
+                stopVerseMode();
+            }
+        }
+
+        function playVerse(number, ayahNum) {
+            const verseKey = number + ':' + ayahNum;
+            ensureVerseAudio(number).then(map => {
+                const url = map[verseKey];
+                if (url) {
+                    startVerseQueue(number, [{ key: verseKey, url: url }]);
+                } else {
+                    loadAndPlay(`${AUDIO_BASE}/${number.toString().padStart(3, '0')}.mp3`, null);
+                }
+            }).catch(() => {
+                loadAndPlay(`${AUDIO_BASE}/${number.toString().padStart(3, '0')}.mp3`, null);
+            });
+        }
+
+        function playAllVerses(number, name) {
+            ensureVerseAudio(number).then(map => {
+                const keys = Object.keys(map).sort((a, b) => Number(a.split(':')[1]) - Number(b.split(':')[1]));
+                if (!keys.length) { loadAndPlay(`${AUDIO_BASE}/${number.toString().padStart(3, '0')}.mp3`, null); return; }
+                const queue = keys.map(k => ({ key: k, url: map[k] }));
+                startVerseQueue(number, queue);
+            }).catch(() => {
+                playSurah(number, name);
+            });
+        }
+
         function showAudioError(message) {
             isPlaying = false;
             document.getElementById('playPauseIcon').classList.remove('fa-pause');
@@ -1376,6 +1477,7 @@
             document.getElementById('playPauseIcon').classList.remove('fa-pause');
             document.getElementById('playPauseIcon').classList.add('fa-play');
             updateEqualizer();
+            if (verseMode) { advanceVerseQueue(); return; }
             if (playbackMode === 'repeat-all') {
                 playNextSurah(true);
             } else if (playbackMode === 'shuffle') {
