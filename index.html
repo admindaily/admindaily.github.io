@@ -683,7 +683,7 @@
         function createSurahCard(surah, prefix) {
             const isSaved = safeLocalJSON('quranhub_bookmarks', []).includes(surah.number);
             const safeName = surah.name.replace(/'/g, "\\'");
-            return `<div class="surah-card" onclick="playSurah(${surah.number}, '${safeName}')">
+            return `<div class="surah-card" id="surah-card-${surah.number}" onclick="onSurahCardTap(${surah.number}, '${safeName}')">
                 <div class="surah-header">
                     <div class="surah-number">${surah.number}</div>
                     <div class="surah-type">${surah.type} • ${surah.verses} verses</div>
@@ -695,7 +695,7 @@
                 </div>
                 <div class="surah-card-actions" style="display:flex;align-items:center;gap:10px;margin-top:12px;">
                     <button class="action-btn read" onclick="event.stopPropagation();viewVisualQuran(${surah.number})" title="Read"><i class="fas fa-book-open"></i> Read</button>
-                    ${isSaved ? '<span class="saved-flag" title="Saved" style="color:var(--accent);"><i class="fas fa-bookmark"></i></span>' : ''}
+                    <span id="surah-flag-${surah.number}" class="saved-flag" title="Saved" style="color:var(--accent);">${isSaved ? '<i class="fas fa-bookmark"></i>' : ''}</span>
                 </div>
             </div>`;
         }
@@ -1730,6 +1730,61 @@
                 bookmarks.push(number);
                 localStorage.setItem('quranhub_bookmarks', JSON.stringify(bookmarks));
             }
+        }
+
+        function onSurahCardTap(number, name) {
+            const saved = safeLocalJSON('quranhub_bookmarks', []).includes(number);
+            if (saved) {
+                playSurah(number, name);
+            } else {
+                downloadSurahInBackground(number, name);
+            }
+        }
+
+        async function downloadSurahInBackground(number, name) {
+            saveSurahForever(number);
+            setCardDownloadState(number, 'downloading');
+            let url = null;
+            try {
+                const r = await fetch(`${AUDIO_API}/${currentReciterId}/${number}?language=en`);
+                const data = await r.json();
+                url = data && data.audio_file && data.audio_file.audio_url;
+            } catch (e) { url = null; }
+            if (!url) {
+                const padded = number.toString().padStart(3, '0');
+                url = `https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/${padded}.mp3`;
+            }
+            try {
+                await fetch(url);
+                try { await fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`); } catch (e) {}
+                setCardDownloadState(number, 'saved');
+                showToast(`Surah ${name} saved for offline`);
+            } catch (e) {
+                setCardDownloadState(number, 'error');
+                showToast(`Could not download Surah ${name}`);
+            }
+        }
+
+        function setCardDownloadState(number, state) {
+            const flag = document.getElementById('surah-flag-' + number);
+            if (!flag) return;
+            if (state === 'downloading') flag.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            else if (state === 'saved') flag.innerHTML = '<i class="fas fa-bookmark"></i>';
+            else if (state === 'error') flag.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#c62828;"></i>';
+        }
+
+        function showToast(msg) {
+            let t = document.getElementById('qh-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'qh-toast';
+                t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card-bg);color:var(--text-primary);padding:12px 20px;border-radius:10px;z-index:9998;box-shadow:0 4px 20px rgba(0,0,0,0.4);border:1px solid var(--border-color);font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center;';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.opacity = '1';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(function() { t.style.opacity = '0'; }, 2600);
         }
 
         function loadBookmarks(prefix) {
