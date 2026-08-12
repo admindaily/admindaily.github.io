@@ -1849,6 +1849,31 @@
             t._timer = setTimeout(function() { t.style.opacity = '0'; }, 2600);
         }
 
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            const el = document.getElementById('installPrompt');
+            if (el && !localStorage.getItem('quranhub_install_dismissed')) el.style.display = 'flex';
+        });
+        function installApp() {
+            const isIos = /iP(hone|ad|od)/.test(navigator.userAgent) && !window.MSStream;
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                deferredInstallPrompt.userChoice.then((choice) => {
+                    deferredInstallPrompt = null;
+                    const el = document.getElementById('installPrompt');
+                    if (el) el.style.display = 'none';
+                    if (choice.outcome === 'accepted') localStorage.removeItem('quranhub_install_dismissed');
+                    else localStorage.setItem('quranhub_install_dismissed', '1');
+                });
+            } else if (isIos) {
+                showToast('Tap the Share icon, then "Add to Home Screen" to install.');
+            } else {
+                showToast('Use your browser’s menu / address-bar install option to add QuranHub.');
+            }
+        }
+
         function loadBookmarks(prefix) {
             const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
             bookmarks.forEach(num => {
@@ -1906,36 +1931,14 @@
             loadDailyHadith();
             (adsbygoogle = window.adsbygoogle || []).push({});
 
-            let deferredInstallPrompt = null;
             const installPromptEl = document.getElementById('installPrompt');
             const installBtn = document.getElementById('installBtn');
             const installDismiss = document.getElementById('installDismiss');
-
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredInstallPrompt = e;
-                if (!localStorage.getItem('quranhub_install_dismissed') && installPromptEl) {
-                    installPromptEl.style.display = 'flex';
-                }
+            if (installBtn) installBtn.addEventListener('click', installApp);
+            if (installDismiss) installDismiss.addEventListener('click', () => {
+                localStorage.setItem('quranhub_install_dismissed', '1');
+                if (installPromptEl) installPromptEl.style.display = 'none';
             });
-
-            if (installBtn) {
-                installBtn.addEventListener('click', async () => {
-                    if (!deferredInstallPrompt) return;
-                    deferredInstallPrompt.prompt();
-                    const { outcome } = await deferredInstallPrompt.userChoice;
-                    deferredInstallPrompt = null;
-                    if (installPromptEl) installPromptEl.style.display = 'none';
-                    if (outcome === 'accepted') localStorage.removeItem('quranhub_install_dismissed');
-                });
-            }
-
-            if (installDismiss) {
-                installDismiss.addEventListener('click', () => {
-                    localStorage.setItem('quranhub_install_dismissed', '1');
-                    if (installPromptEl) installPromptEl.style.display = 'none';
-                });
-            }
         });
     </script>
     <script>
