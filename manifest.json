@@ -1,0 +1,21 @@
+{
+  "name": "QuranHub - Digital Quran Resources",
+  "short_name": "QuranHub",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1f15",
+  "theme_color": "#1a472a",
+  "description": "Read, listen, and download all 114 surahs with translations, tafsir, and audio recitations.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
