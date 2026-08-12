@@ -1322,7 +1322,8 @@
         let lastSave = 0;
         const audioPlayer = document.getElementById('audioPlayer');
 
-        let audioTriedFallback = false;
+            let audioTriedFallback = false;
+            let currentObjectUrl = null;
 
         function setPlayIcon(playing) {
             const icon = document.getElementById('playPauseIcon');
@@ -1350,13 +1351,23 @@
             loadReciterAudio(currentReciterId, number, name);
         }
 
-        function loadReciterAudio(reciterId, number, name) {
+        async function loadReciterAudio(reciterId, number, name) {
+            const key = reciterId + ':' + number;
+            let blob = null;
+            try { blob = await getAudioBlob(key); } catch (e) { blob = null; }
+            if (blob) {
+                if (currentObjectUrl) { try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {} }
+                currentObjectUrl = URL.createObjectURL(blob);
+                loadAndPlay(currentObjectUrl, () => tryFallback(number, name));
+                return;
+            }
             fetch(`${AUDIO_API}/${reciterId}/${number}?language=en`)
                 .then(r => r.json())
                 .then(data => {
                     const url = data && data.audio_file && data.audio_file.audio_url;
                     if (url) {
                         loadAndPlay(url, () => tryFallback(number, name));
+                        fetch(url).then(r => r.blob()).then(b => saveAudioBlob(key, b)).catch(() => {});
                     } else {
                         tryFallback(number, name);
                     }
@@ -1398,6 +1409,44 @@
             audioPlayer.addEventListener('error', onError, { once: true });
             audioPlayer.src = url;
             audioPlayer.load();
+        }
+
+        const AUDIO_DB_NAME = 'quranhub_audio';
+        const AUDIO_STORE_NAME = 'files';
+        let _audioDb = null;
+        function openAudioDB() {
+            return new Promise((resolve, reject) => {
+                if (_audioDb) return resolve(_audioDb);
+                const req = indexedDB.open(AUDIO_DB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(AUDIO_STORE_NAME)) db.createObjectStore(AUDIO_STORE_NAME);
+                };
+                req.onsuccess = () => { _audioDb = req.result; resolve(_audioDb); };
+                req.onerror = () => reject(req.error);
+            });
+        }
+        async function saveAudioBlob(key, blob) {
+            try {
+                const db = await openAudioDB();
+                await new Promise((resolve, reject) => {
+                    const tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+                    tx.objectStore(AUDIO_STORE_NAME).put(blob, key);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject(tx.error);
+                });
+            } catch (e) { /* storage unavailable; ignore */ }
+        }
+        async function getAudioBlob(key) {
+            try {
+                const db = await openAudioDB();
+                return await new Promise((resolve, reject) => {
+                    const tx = db.transaction(AUDIO_STORE_NAME, 'readonly');
+                    const r = tx.objectStore(AUDIO_STORE_NAME).get(key);
+                    r.onsuccess = () => resolve(r.result || null);
+                    r.onerror = () => reject(r.error);
+                });
+            } catch (e) { return null; }
         }
 
         const verseAudioCache = {};
@@ -1755,10 +1804,13 @@
                 url = `https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/${padded}.mp3`;
             }
             try {
-                await fetch(url);
+                const resp = await fetch(url);
+                const blob = await resp.blob();
+                const key = currentReciterId + ':' + number;
+                await saveAudioBlob(key, blob);
                 try { await fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`); } catch (e) {}
                 setCardDownloadState(number, 'saved');
-                showToast(`Surah ${name} saved for offline`);
+                showToast(`Surah ${name} saved on this device`);
             } catch (e) {
                 setCardDownloadState(number, 'error');
                 showToast(`Could not download Surah ${name}`);
