@@ -312,6 +312,22 @@
             main { padding-bottom: 150px; }
         }
         body.audio-player-active main { padding-bottom: 150px; }
+        .audio-reciter {
+            background: var(--card-bg); border: 2px solid var(--border-color); color: var(--text-primary);
+            font-family: inherit; font-size: 0.85rem; border-radius: 8px; padding: 6px 10px; cursor: pointer; max-width: 160px;
+        }
+        .audio-reciter:hover { border-color: var(--accent); }
+        .audio-reciter option { color: #111; }
+        .resume-btn {
+            display: none; margin: 24px auto 0; padding: 0.7rem 1.4rem; border: none; border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent) 0%, #b8943f 100%); color: var(--background);
+            font-family: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(212,168,83,0.2);
+        }
+        .resume-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(212,168,83,0.4); }
+        #savedSection { max-width: 1400px; margin: 0 auto; padding: 40px 2rem 60px; }
+        #savedSection h2 { color: var(--accent); margin-bottom: 24px; text-align: center; }
+        .saved-empty { text-align: center; color: var(--text-secondary); padding: 40px; }
     </style>
 </head>
 <body>
@@ -321,6 +337,7 @@
             <nav>
                 <a href="#home">Home</a>
                 <a href="#surahs">All Surahs</a>
+                <a href="#savedSection" onclick="showSaved(event)">Saved</a>
                 <a href="#about">About</a>
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
                     <i class="fas fa-moon" id="themeIcon"></i>
@@ -340,6 +357,7 @@
                 "Indeed, this Quran guides to that which is most upright."
                 <br>— Surah Al-Isra (17:9)
             </p>
+            <button class="resume-btn" id="resumeBtn" onclick="resumePlayback()"></button>
         </section>
 
         <section class="daily-hadith" style="max-width:700px;margin:0 auto 50px;background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:24px;">
@@ -386,6 +404,11 @@
         <div class="surah-grid" id="surahGrid"></div>
     </main>
 
+    <section id="savedSection" style="display:none;">
+        <h2><i class="fas fa-bookmark"></i> Saved Surahs</h2>
+        <div class="surah-grid" id="savedGrid"></div>
+    </section>
+
     <div class="audio-player-bar" id="audioPlayerBar">
         <div class="audio-player-info">
             <div class="audio-player-icon"><i class="fas fa-music"></i></div>
@@ -414,6 +437,7 @@
                 <button class="volume-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="volumeIcon"></i></button>
                 <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100" onchange="setVolume(this.value)">
             </div>
+            <select class="audio-reciter" id="reciterSelect" onchange="changeReciter(this.value)" title="Reciter"></select>
             <button class="audio-close-btn" onclick="closeAudioPlayer()" title="Close Player"><i class="fas fa-times"></i></button>
         </div>
     </div>
@@ -573,15 +597,41 @@
         ];
 
         const AUDIO_BASE = 'https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays';
-        const AUDIO_FALLBACK = 'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy';
+
+        const AUDIO_API = 'https://api.quran.com/api/v4/chapter_recitations';
+
+        const RECITERS = [
+            { id: 3, name: 'Al-Sudais' },
+            { id: 7, name: 'Al-Afasy' },
+            { id: 6, name: 'Al-Husary (Murattal)' },
+            { id: 12, name: 'Al-Husary (Muallim)' },
+            { id: 9, name: 'Al-Minshawi (Murattal)' },
+            { id: 8, name: 'Al-Minshawi (Mujawwad)' },
+            { id: 1, name: 'Abdul Basit (Mujawwad)' },
+            { id: 2, name: 'Abdul Basit (Murattal)' },
+            { id: 4, name: 'Abu Bakr al-Shatri' },
+            { id: 10, name: 'Sa`ud ash-Shuraym' },
+            { id: 5, name: 'Hani ar-Rifai' }
+        ];
+
+        let currentReciterId = parseInt(localStorage.getItem('quranhub_reciter'), 10) || 3;
+        let currentReciterName = (RECITERS.find(r => r.id === currentReciterId) || RECITERS[0]).name;
+
+        function safeLocalJSON(key, fallback) {
+            const raw = localStorage.getItem(key);
+            if (raw === null) return fallback;
+            try { return JSON.parse(raw); } catch { return fallback; }
+        }
+
         const PDF_BASE = 'https://surahquran.com/surah-pdf/pdf';
         const TRANSLATION_API = 'https://api.quran.com/api/v4/verses/by_chapter';
         const TAFSIR_API = 'https://api.islamic.app/v1/verses/by_chapter';
         const HADITH_API = 'https://ummahapi.com/api/hadith';
         const SEERAH_API = 'https://public.api.ihsandeen.com/api/events';
 
-        function createSurahCard(surah) {
+        function createSurahCard(surah, prefix) {
             const safeName = surah.name.replace(/'/g, "\\'");
+            const bId = 'bookmark-' + (prefix || '') + surah.number;
             return `<div class="surah-card">
                 <div class="surah-header">
                     <div class="surah-number">${surah.number}</div>
@@ -616,8 +666,8 @@
                     </button>
                 </div>
                 <div style="display:flex;gap:8px;margin-top:10px;">
-                    <button onclick="toggleBookmark(${surah.number})" id="bookmark-${surah.number}" title="Bookmark" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
-                        <i class="fas fa-bookmark"></i> <span>Save</span>
+                    <button onclick="toggleBookmark(${surah.number}, '${prefix || ''}')" id="${bId}" title="Save" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
+                        <i class="far fa-bookmark"></i> <span>Save</span>
                     </button>
                     <button onclick="shareSurah(${surah.number}, '${safeName}')" title="Share" style="flex:1;padding:8px;background:transparent;border:1px solid var(--border-color);border-radius:8px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:0.8rem;transition:all 0.3s;">
                         <i class="fas fa-share"></i> <span>Share</span>
@@ -688,7 +738,7 @@
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
 
         function toggleBookmark(number) {
-            let bookmarks = JSON.parse(localStorage.getItem('quranhub_bookmarks') || '[]');
+            let bookmarks = safeLocalJSON('quranhub_bookmarks', []);
             const btn = document.getElementById(`bookmark-${number}`);
             const icon = btn.querySelector('i');
 
@@ -724,7 +774,7 @@
         }
 
         function loadBookmarks() {
-            const bookmarks = JSON.parse(localStorage.getItem('quranhub_bookmarks') || '[]');
+            const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
             bookmarks.forEach(num => {
                 const btn = document.getElementById(`bookmark-${num}`);
                 if (btn) {
@@ -1164,19 +1214,25 @@
 
         let currentSurahNumber = 0;
         let isPlaying = false;
+        let playbackMode = 'single'; // 'single' | 'repeat-one' | 'repeat-all' | 'shuffle'
+        let pendingStartTime = 0;
+        let lastSave = 0;
         const audioPlayer = document.getElementById('audioPlayer');
 
-        function playSurah(number, name) {
-            currentSurahNumber = number;
-            const paddedNum = number.toString().padStart(3, '0');
-            const sources = [
-                { url: `${AUDIO_BASE}/${paddedNum}.mp3`, label: 'Sheikh Abdulrahman Al-Sudais' },
-                { url: `${AUDIO_FALLBACK}/${paddedNum}.mp3`, label: 'Sheikh Mishary Al-Afasy' }
-            ];
-            let sourceIndex = 0;
+        let audioTriedFallback = false;
 
+        function setPlayIcon(playing) {
+            const icon = document.getElementById('playPauseIcon');
+            if (playing) { icon.classList.remove('fa-play'); icon.classList.add('fa-pause'); }
+            else { icon.classList.remove('fa-pause'); icon.classList.add('fa-play'); }
+        }
+
+        function playSurah(number, name, startTime) {
+            currentSurahNumber = number;
+            pendingStartTime = startTime || 0;
+            audioTriedFallback = false;
             document.getElementById('audioPlayerTitle').textContent = `Surah ${name}`;
-            document.getElementById('audioPlayerSubtitle').textContent = sources[0].label;
+            document.getElementById('audioPlayerSubtitle').textContent = currentReciterName;
             document.getElementById('audioPlayerBar').classList.add('active');
             document.body.classList.add('audio-player-active');
             document.getElementById('progressFill').style.width = '0%';
@@ -1185,56 +1241,59 @@
 
             audioPlayer.pause();
             audioPlayer.removeAttribute('src');
+            audioPlayer.loop = (playbackMode === 'repeat-one');
 
-            const trySource = () => {
-                if (sourceIndex >= sources.length) {
-                    showAudioError('Unable to load audio. Try again later.');
-                    return;
-                }
+            loadReciterAudio(currentReciterId, number, name);
+        }
 
-                const source = sources[sourceIndex];
-                document.getElementById('audioPlayerSubtitle').textContent = source.label;
-
-                const onCanPlay = () => {
-                    audioPlayer.removeEventListener('canplay', onCanPlay);
-                    audioPlayer.removeEventListener('error', onError);
-                    clearTimeout(timeout);
-                    const playPromise = audioPlayer.play();
-                    if (playPromise) {
-                        playPromise.then(() => {
-                            isPlaying = true;
-                            document.getElementById('playPauseIcon').classList.remove('fa-play');
-                            document.getElementById('playPauseIcon').classList.add('fa-pause');
-                            updateEqualizer();
-                        }).catch(() => {
-                            sourceIndex++;
-                            trySource();
-                        });
+        function loadReciterAudio(reciterId, number, name) {
+            fetch(`${AUDIO_API}/${reciterId}/${number}?language=en`)
+                .then(r => r.json())
+                .then(data => {
+                    const url = data && data.audio_file && data.audio_file.audio_url;
+                    if (url) {
+                        loadAndPlay(url, () => tryFallback(number, name));
+                    } else {
+                        tryFallback(number, name);
                     }
-                };
+                })
+                .catch(() => tryFallback(number, name));
+        }
 
-                const onError = () => {
-                    audioPlayer.removeEventListener('canplay', onCanPlay);
-                    audioPlayer.removeEventListener('error', onError);
-                    clearTimeout(timeout);
-                    sourceIndex++;
-                    trySource();
-                };
+        function tryFallback(number, name) {
+            if (audioTriedFallback) { showAudioError('Unable to load audio. Try again later.'); return; }
+            audioTriedFallback = true;
+            document.getElementById('audioPlayerSubtitle').textContent = 'Al-Sudais (fallback)';
+            const padded = number.toString().padStart(3, '0');
+            loadAndPlay(`https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/${padded}.mp3`, () => showAudioError('Unable to load audio. Try again later.'));
+        }
 
-                const timeout = setTimeout(() => {
-                    audioPlayer.removeEventListener('canplay', onCanPlay);
-                    audioPlayer.removeEventListener('error', onError);
-                    sourceIndex++;
-                    trySource();
-                }, 15000);
-
-                audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
-                audioPlayer.addEventListener('error', onError, { once: true });
-                audioPlayer.src = source.url;
-                audioPlayer.load();
+        function loadAndPlay(url, onFail) {
+            const onCanPlay = () => {
+                audioPlayer.removeEventListener('canplay', onCanPlay);
+                audioPlayer.removeEventListener('error', onError);
+                clearTimeout(timeout);
+                const p = audioPlayer.play();
+                if (p) {
+                    p.then(() => { isPlaying = true; setPlayIcon(true); updateEqualizer(); })
+                     .catch(() => {});
+                }
             };
-
-            trySource();
+            const onError = () => {
+                audioPlayer.removeEventListener('canplay', onCanPlay);
+                audioPlayer.removeEventListener('error', onError);
+                clearTimeout(timeout);
+                if (onFail) onFail();
+            };
+            const timeout = setTimeout(() => {
+                audioPlayer.removeEventListener('canplay', onCanPlay);
+                audioPlayer.removeEventListener('error', onError);
+                if (onFail) onFail();
+            }, 15000);
+            audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
+            audioPlayer.addEventListener('error', onError, { once: true });
+            audioPlayer.src = url;
+            audioPlayer.load();
         }
 
         function showAudioError(message) {
@@ -1283,6 +1342,7 @@
         }
 
         function closeAudioPlayer() {
+            saveLast();
             audioPlayer.pause();
             audioPlayer.src = '';
             isPlaying = false;
@@ -1296,7 +1356,15 @@
             document.getElementById('playPauseIcon').classList.remove('fa-pause');
             document.getElementById('playPauseIcon').classList.add('fa-play');
             updateEqualizer();
-            playNextSurah();
+            if (playbackMode === 'repeat-all') {
+                playNextSurah(true);
+            } else if (playbackMode === 'shuffle') {
+                playRandomSurah();
+            } else {
+                localStorage.removeItem('quranhub_last');
+                loadResume();
+            }
+            // 'repeat-one' is handled by audioPlayer.loop, so 'ended' won't fire
         }
 
         function updateProgress() {
@@ -1306,11 +1374,30 @@
             const progress = (current / duration) * 100;
             document.getElementById('progressFill').style.width = progress + '%';
             document.getElementById('currentTime').textContent = formatTime(current);
+            const now = Date.now();
+            if (now - lastSave > 5000 && currentSurahNumber && !audioPlayer.paused) {
+                saveLast();
+                lastSave = now;
+            }
+        }
+
+        function saveLast() {
+            if (currentSurahNumber && audioPlayer.duration) {
+                localStorage.setItem('quranhub_last', JSON.stringify({
+                    number: currentSurahNumber,
+                    time: audioPlayer.currentTime,
+                    duration: audioPlayer.duration
+                }));
+            }
         }
 
         function updateDuration() {
             if (audioPlayer.duration) {
                 document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
+                if (pendingStartTime && pendingStartTime < audioPlayer.duration - 1) {
+                    audioPlayer.currentTime = pendingStartTime;
+                    pendingStartTime = 0;
+                }
             }
         }
 
@@ -1399,11 +1486,95 @@
             }
         }
 
+        function populateReciters() {
+            const sel = document.getElementById('reciterSelect');
+            if (!sel) return;
+            sel.innerHTML = RECITERS.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            sel.value = String(currentReciterId);
+        }
+
+        function changeReciter(id) {
+            currentReciterId = parseInt(id, 10) || 3;
+            currentReciterName = (RECITERS.find(r => r.id === currentReciterId) || RECITERS[0]).name;
+            localStorage.setItem('quranhub_reciter', String(currentReciterId));
+            if (currentSurahNumber > 0) {
+                const s = surahs[currentSurahNumber - 1];
+                playSurah(s.number, s.name);
+            }
+        }
+
+        function toggleBookmark(number, prefix) {
+            let bookmarks = safeLocalJSON('quranhub_bookmarks', []);
+            const btn = document.getElementById('bookmark-' + (prefix || '') + number);
+            const icon = btn ? btn.querySelector('i') : null;
+            if (bookmarks.includes(number)) {
+                bookmarks = bookmarks.filter(n => n !== number);
+                if (btn) { btn.style.background = 'transparent'; btn.style.color = 'var(--text-secondary)'; btn.style.borderColor = 'var(--border-color)'; }
+                if (icon) { icon.classList.remove('fas'); icon.classList.add('far'); }
+            } else {
+                bookmarks.push(number);
+                if (btn) { btn.style.background = 'rgba(212,168,83,0.2)'; btn.style.color = 'var(--accent)'; btn.style.borderColor = 'var(--accent)'; }
+                if (icon) { icon.classList.remove('far'); icon.classList.add('fas'); }
+            }
+            localStorage.setItem('quranhub_bookmarks', JSON.stringify(bookmarks));
+            const sec = document.getElementById('savedSection');
+            if (sec && sec.style.display === 'block') showSaved();
+        }
+
+        function loadBookmarks(prefix) {
+            const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
+            bookmarks.forEach(num => {
+                const btn = document.getElementById('bookmark-' + (prefix || '') + num);
+                if (btn) {
+                    btn.style.background = 'rgba(212,168,83,0.2)';
+                    btn.style.color = 'var(--accent)';
+                    btn.style.borderColor = 'var(--accent)';
+                    const icon = btn.querySelector('i');
+                    if (icon) { icon.classList.remove('far'); icon.classList.add('fas'); }
+                }
+            });
+        }
+
+        function showSaved(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const grid = document.getElementById('savedGrid');
+            const sec = document.getElementById('savedSection');
+            const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
+            if (bookmarks.length === 0) {
+                grid.innerHTML = '<div class="saved-empty">No saved surahs yet. Tap the <i class="far fa-bookmark"></i> Save button on any surah card.</div>';
+            } else {
+                grid.innerHTML = bookmarks.map(n => createSurahCard(surahs[n - 1], 'saved')).join('');
+            }
+            sec.style.display = 'block';
+            sec.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function loadResume() {
+            const btn = document.getElementById('resumeBtn');
+            if (!btn) return;
+            const last = safeLocalJSON('quranhub_last', null);
+            if (last && last.number && surahs[last.number - 1]) {
+                btn.style.display = 'block';
+                btn.innerHTML = '<i class="fas fa-play"></i> Resume: Surah ' + surahs[last.number - 1].name;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        function resumePlayback() {
+            const last = safeLocalJSON('quranhub_last', null);
+            if (!last || !last.number) return;
+            const s = surahs[last.number - 1];
+            if (s) playSurah(s.number, s.name, last.time);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             renderSurahs(surahs);
             loadTheme();
-            loadDailyHadith();
+            updateModeButtons();
+            populateReciters();
             loadBookmarks();
+            loadResume();
             (adsbygoogle = window.adsbygoogle || []).push({});
         });
     </script>
