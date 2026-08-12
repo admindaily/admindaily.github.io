@@ -156,9 +156,10 @@
         .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; cursor: pointer; }
         .audio-speed { background: var(--primary); border: none; color: var(--text-primary); padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; cursor: pointer; }
         .audio-speed:hover { background: var(--secondary); }
-        .repeat-btn { background: none; border: none; color: var(--text-secondary); font-size: 1rem; cursor: pointer; }
-        .repeat-btn.active { color: var(--accent); }
-        .repeat-btn:hover { color: var(--accent); }
+        .mode-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; padding: 4px 6px; }
+        .mode-btn b { font-size: .6em; vertical-align: top; }
+        .mode-btn.active { color: var(--accent); }
+        .mode-btn:hover { color: var(--accent); }
         .audio-equalizer { display: flex; align-items: flex-end; gap: 2px; height: 20px; }
         .eq-bar { width: 3px; background: var(--accent); border-radius: 1px; animation: eq 0.5s ease-in-out infinite alternate; }
         .eq-bar:nth-child(1) { animation-delay: 0s; }
@@ -431,7 +432,9 @@
                 </div>
                 <span class="audio-time" id="totalTime">0:00</span>
             </div>
-            <button class="repeat-btn" id="repeatBtn" onclick="toggleRepeat()" title="Repeat"><i class="fas fa-redo"></i></button>
+            <button class="mode-btn" id="shuffleBtn" onclick="setPlaybackMode(0)" title="Shuffle"><i class="fas fa-shuffle"></i></button>
+            <button class="mode-btn" id="repeatAllBtn" onclick="setPlaybackMode(1)" title="Repeat All"><i class="fas fa-repeat"></i></button>
+            <button class="mode-btn" id="repeatOneBtn" onclick="setPlaybackMode(2)" title="Repeat One"><i class="fas fa-repeat"></i><b>1</b></button>
             <button class="audio-speed" id="speedBtn" onclick="toggleSpeed()" title="Playback Speed">1x</button>
             <div class="audio-volume">
                 <button class="volume-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="volumeIcon"></i></button>
@@ -1214,7 +1217,8 @@
 
         let currentSurahNumber = 0;
         let isPlaying = false;
-        let playbackMode = 'single'; // 'single' | 'repeat-one' | 'repeat-all' | 'shuffle'
+        const MODES = ['shuffle', 'repeat-all', 'repeat-one'];
+        let playbackMode = localStorage.getItem('quranhub_playbackMode') || 'single';
         let pendingStartTime = 0;
         let lastSave = 0;
         const audioPlayer = document.getElementById('audioPlayer');
@@ -1327,10 +1331,12 @@
             }
         }
 
-        function playNextSurah() {
+        function playNextSurah(loop) {
             if (currentSurahNumber < 114) {
                 const nextSurah = surahs[currentSurahNumber];
                 playSurah(nextSurah.number, nextSurah.name);
+            } else if (loop) {
+                playSurah(1, surahs[0].name);
             }
         }
 
@@ -1464,17 +1470,32 @@
             document.getElementById('speedBtn').textContent = playbackSpeed + 'x';
         }
 
-        let isRepeat = false;
-        function toggleRepeat() {
-            isRepeat = !isRepeat;
-            const repeatBtn = document.getElementById('repeatBtn');
-            if (isRepeat) {
-                repeatBtn.classList.add('active');
-                audioPlayer.loop = true;
-            } else {
-                repeatBtn.classList.remove('active');
-                audioPlayer.loop = false;
+        function setPlaybackMode(idx) {
+            const mode = MODES[idx];
+            if (!mode) return;
+            playbackMode = (playbackMode === mode) ? 'single' : mode;
+            localStorage.setItem('quranhub_playbackMode', playbackMode);
+            updateModeButtons();
+            if (currentSurahNumber > 0) {
+                audioPlayer.loop = (playbackMode === 'repeat-one');
             }
+        }
+
+        function updateModeButtons() {
+            const btns = document.querySelectorAll('.mode-btn');
+            btns.forEach((btn, i) => {
+                btn.classList.toggle('active', playbackMode === MODES[i]);
+            });
+        }
+
+        function playRandomSurah() {
+            if (!surahs.length) return;
+            let idx = Math.floor(Math.random() * surahs.length);
+            if (surahs.length > 1 && surahs[idx].number === currentSurahNumber) {
+                idx = (idx + 1) % surahs.length;
+            }
+            const s = surahs[idx];
+            playSurah(s.number, s.name);
         }
 
         function updateEqualizer() {
