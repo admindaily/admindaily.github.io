@@ -681,7 +681,9 @@
         const SEERAH_API = 'https://public.api.ihsandeen.com/api/events';
 
         function createSurahCard(surah, prefix) {
-            return `<div class="surah-card" onclick="viewVisualQuran(${surah.number})">
+            const isSaved = safeLocalJSON('quranhub_bookmarks', []).includes(surah.number);
+            const safeName = surah.name.replace(/'/g, "\\'");
+            return `<div class="surah-card" onclick="playSurah(${surah.number}, '${safeName}')">
                 <div class="surah-header">
                     <div class="surah-number">${surah.number}</div>
                     <div class="surah-type">${surah.type} • ${surah.verses} verses</div>
@@ -690,6 +692,10 @@
                     <div class="surah-name-arabic">${surah.nameArabic}</div>
                     <div class="surah-name-english">${surah.name}</div>
                     <div class="surah-meaning">${surah.meaning}</div>
+                </div>
+                <div class="surah-card-actions" style="display:flex;align-items:center;gap:10px;margin-top:12px;">
+                    <button class="action-btn read" onclick="event.stopPropagation();viewVisualQuran(${surah.number})" title="Read"><i class="fas fa-book-open"></i> Read</button>
+                    ${isSaved ? '<span class="saved-flag" title="Saved" style="color:var(--accent);"><i class="fas fa-bookmark"></i></span>' : ''}
                 </div>
             </div>`;
         }
@@ -946,6 +952,7 @@
         function viewVisualQuran(number) {
             const surah = surahs[number - 1];
             if (!surah) return;
+            saveSurahForever(number);
             const safeName = surah.name.replace(/'/g, "\\'");
             const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
             const isBookmarked = bookmarks.includes(number);
@@ -1324,6 +1331,7 @@
         }
 
         function playSurah(number, name, startTime) {
+            saveSurahForever(number);
             currentSurahNumber = number;
             pendingStartTime = startTime || 0;
             audioTriedFallback = false;
@@ -1716,6 +1724,14 @@
             if (sec && sec.style.display === 'block') showSaved();
         }
 
+        function saveSurahForever(number) {
+            const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
+            if (!bookmarks.includes(number)) {
+                bookmarks.push(number);
+                localStorage.setItem('quranhub_bookmarks', JSON.stringify(bookmarks));
+            }
+        }
+
         function loadBookmarks(prefix) {
             const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
             bookmarks.forEach(num => {
@@ -1736,7 +1752,7 @@
             const sec = document.getElementById('savedSection');
             const bookmarks = safeLocalJSON('quranhub_bookmarks', []);
             if (bookmarks.length === 0) {
-                grid.innerHTML = '<div class="saved-empty">No saved surahs yet. Tap the <i class="far fa-bookmark"></i> Save button on any surah card.</div>';
+                grid.innerHTML = '<div class="saved-empty">No saved surahs yet. Tap any surah to play and save it for quick replay.</div>';
             } else {
                 grid.innerHTML = bookmarks.map(n => createSurahCard(surahs[n - 1], 'saved')).join('');
             }
