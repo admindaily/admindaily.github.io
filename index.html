@@ -1171,35 +1171,43 @@
         function loadDailyHadith() {
             const target = document.getElementById('dailyHadithContent');
             if (!target) return;
+            const errorMsg = '<p style="color:var(--text-secondary);">Unable to load daily hadith. Please try again later.</p>';
+
+            function render(hadith) {
+                const narratorMatch = hadith.english && hadith.english.match(/Narrated ([^:]+):/);
+                const narrator = narratorMatch ? narratorMatch[1].trim() : 'Unknown';
+                const text = hadith.english ? hadith.english.replace(/Narrated [^:]+: /, '') : (hadith.arabic || '');
+                const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
+                target.innerHTML = `
+                    <div style="margin-bottom:10px;color:var(--text-secondary);font-size:0.9rem;"><strong>Narrator:</strong> ${narrator}</div>
+                    <div class="arabic-text" style="text-align:right;margin-bottom:10px;font-size:1.1rem;">${hadith.arabic || ''}</div>
+                    <div style="color:var(--text-primary);line-height:1.7;margin-bottom:10px;">${text}</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">
+                        <span style="color:var(--accent);font-size:0.85rem;">${hadith.collection_name || hadith.collection || 'Hadith'} #${hadith.hadithnumber}</span>
+                        <span style="background:${gradeColor};color:#fff;padding:2px 10px;border-radius:12px;font-size:0.8rem;font-weight:600;">${hadith.grade || ''}</span>
+                    </div>
+                    <p style="margin-top:10px;color:var(--text-secondary);font-size:0.85rem;"><em>Tap "Hadith" on any surah to explore more</em></p>`;
+            }
+
+            function attempt(col, num, retry) {
+                fetch(`${HADITH_API}/${col}/${num}`)
+                    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                    .then(data => {
+                        if (data.success && data.data && data.data.english) {
+                            render(data.data);
+                        } else if (!retry) {
+                            attempt(col, 1, true);
+                        } else {
+                            target.innerHTML = errorMsg;
+                        }
+                    })
+                    .catch(() => { target.innerHTML = errorMsg; });
+            }
+
             const collections = ['bukhari', 'muslim', 'abudawud'];
-            const randomCol = collections[Math.floor(Math.random() * collections.length)];
-            const randomNum = Math.floor(Math.random() * 100) + 1;
-
-            fetch(`${HADITH_API}/${randomCol}/${randomNum}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.data) {
-                        const hadith = data.data;
-                        const narratorMatch = hadith.english.match(/Narrated ([^:]+):/);
-                        const narrator = narratorMatch ? narratorMatch[1].trim() : 'Unknown';
-                        const text = hadith.english.replace(/Narrated [^:]+: /, '');
-                        const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
-
-                        target.innerHTML = `
-                            <div style="margin-bottom:10px;color:var(--text-secondary);font-size:0.9rem;"><strong>Narrator:</strong> ${narrator}</div>
-                            <div class="arabic-text" style="text-align:right;margin-bottom:10px;font-size:1.1rem;">${hadith.arabic}</div>
-                            <div style="color:var(--text-primary);line-height:1.7;margin-bottom:10px;">${text}</div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">
-                                <span style="color:var(--accent);font-size:0.85rem;">${hadith.collection_name} #${hadith.hadithnumber}</span>
-                                <span style="background:${gradeColor};color:#fff;padding:2px 10px;border-radius:12px;font-size:0.8rem;font-weight:600;">${hadith.grade}</span>
-                            </div>
-                            <p style="margin-top:10px;color:var(--text-secondary);font-size:0.85rem;"><em>Tap "Hadith" on any surah to explore more</em></p>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    target.innerHTML = '<p style="color:var(--text-secondary);">Unable to load daily hadith. Please try again later.</p>';
-                });
+            const col = collections[Math.floor(Math.random() * collections.length)];
+            const num = Math.floor(Math.random() * 100) + 1;
+            attempt(col, num, false);
         }
 
         function downloadFullQuranText() {
@@ -1712,6 +1720,7 @@
             populateReciters();
             loadBookmarks();
             loadResume();
+            loadDailyHadith();
             (adsbygoogle = window.adsbygoogle || []).push({});
         });
     </script>
