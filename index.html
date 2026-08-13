@@ -959,6 +959,39 @@
         function viewTranslation(number, name) { showVersesModal(number, name, 'Translation'); }
         function viewMeaning(number, name) { showVersesModal(number, name, 'Meaning'); }
 
+        async function fetchVerses(number) {
+            // Primary source: Quran.com (Uthmani text).
+            try {
+                const r = await fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const data = await r.json();
+                const verses = data.verses || [];
+                if (verses.length) {
+                    return verses.map(v => ({
+                        text: (v.text_uthmani || '').trim(),
+                        vn: v.verse_number || (v.verse_key ? parseInt(v.verse_key.split(':')[1], 10) : 0),
+                        vkey: v.verse_key || (number + ':' + v.verse_number)
+                    }));
+                }
+            } catch (e) { /* fall through to backup source */ }
+
+            // Fallback source: alquran.cloud (single request returns the whole surah).
+            try {
+                const r = await fetch(`https://api.alquran.cloud/v1/surah/${number}`);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const data = await r.json();
+                const ayahs = (data.data && data.data.ayahs) || [];
+                if (ayahs.length) {
+                    return ayahs.map(a => ({
+                        text: (a.text || '').trim(),
+                        vn: a.numberInSurah || a.number || 0,
+                        vkey: number + ':' + (a.numberInSurah || a.number)
+                    }));
+                }
+            } catch (e) { /* give up */ }
+            return null;
+        }
+
         function viewVisualQuran(number) {
             const surah = surahs[number - 1];
             if (!surah) return;
@@ -989,19 +1022,17 @@
             const loader = document.getElementById('visContent');
             loader.innerHTML = '<p style="color:var(--text-secondary);text-align:center;">Loading verses…</p>';
 
-            fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`)
-                .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-                .then(data => {
-                    const verses = data.verses || [];
-                    if (!verses.length) {
+            fetchVerses(number)
+                .then(verses => {
+                    if (!verses || !verses.length) {
                         loader.innerHTML = '<p style="color:var(--text-secondary);text-align:center;"><em>No verses found.</em> <a href="https://quran.com/' + number + '" target="_blank" style="color:var(--accent);">View on Quran.com</a></p>';
                         return;
                     }
                     let html = '';
                     verses.forEach(v => {
-                        const vn = v.verse_key ? v.verse_key.split(':')[1] : v.verse_number;
-                        const txt = (v.text_uthmani || '').trim();
-                        html += `<span class="vis-ayah" data-vkey="${v.verse_key || (number + ':' + vn)}" onclick="playVerse(${number}, ${vn})" title="Tap to play this verse"><span class="ayah-num" style="font-size:0.6em;vertical-align:super;color:var(--accent);margin-left:2px;">${vn}</span> ${txt}</span> `;
+                        const vn = v.vn;
+                        const txt = v.text;
+                        html += `<span class="vis-ayah" data-vkey="${v.vkey}" onclick="playVerse(${number}, ${vn})" title="Tap to play this verse"><span class="ayah-num" style="font-size:0.6em;vertical-align:super;color:var(--accent);margin-left:2px;">${vn}</span> ${txt}</span> `;
                     });
                     loader.innerHTML = '<div style="max-width:1000px;margin:0 auto;text-align:right;line-height:2.4;font-size:2rem;font-weight:normal;font-family:var(--arabic-font);">' + html + '</div>';
                 })
@@ -1844,12 +1875,18 @@
             }
         }
 
-        function onSurahCardTap(number, name) {
-            const saved = safeLocalJSON('quranhub_bookmarks', []).includes(number);
-            if (saved) {
+        async function onSurahCardTap(number, name) {
+            // Only play directly if the surah is already downloaded for the
+            // currently selected reciter. Otherwise download it for this reciter
+            // first (so a different reciter no longer triggers "unable to play"),
+            // then play.
+            let hasAudio = false;
+            try { hasAudio = !!(await getAudioBlob(currentReciterId + ':' + number)); } catch (e) {}
+            if (hasAudio) {
                 playSurah(number, name);
             } else {
-                downloadSurahInBackground(number, name);
+                await downloadSurahInBackground(number, name);
+                playSurah(number, name);
             }
         }
 
@@ -1874,9 +1911,11 @@
                 try { await fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`); } catch (e) {}
                 setCardDownloadState(number, 'saved');
                 showToast(`Surah ${name} saved on this device`);
+                return true;
             } catch (e) {
                 setCardDownloadState(number, 'error');
                 showToast(`Could not download Surah ${name}`);
+                return false;
             }
         }
 
