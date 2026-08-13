@@ -1455,18 +1455,28 @@
                 loadAndPlay(currentObjectUrl, () => tryFallback(number, name));
                 return;
             }
-            fetch(`${AUDIO_API}/${reciterId}/${number}?language=en`)
-                .then(r => r.json())
-                .then(data => {
-                    const url = data && data.audio_file && data.audio_file.audio_url;
-                    if (url) {
+            // Not cached for this reciter: download THIS reciter's audio, cache it,
+            // and play from the blob. This guarantees the selected reciter is what
+            // you hear (and it's now saved for offline), instead of silently
+            // falling back to a different reciter on a slow connection.
+            try {
+                const r = await fetch(`${AUDIO_API}/${reciterId}/${number}?language=en`);
+                const data = await r.json();
+                const url = data && data.audio_file && data.audio_file.audio_url;
+                if (url) {
+                    const resp = await fetch(url);
+                    const b = await resp.blob();
+                    try { await saveAudioBlob(key, b); } catch (e) {}
+                    if (currentObjectUrl) { try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {} }
+                    currentObjectUrl = URL.createObjectURL(b);
+                    loadAndPlay(currentObjectUrl, () => {
+                        // Blob playback failed: try the direct URL once before giving up.
                         loadAndPlay(url, () => tryFallback(number, name));
-                        fetch(url).then(r => r.blob()).then(b => saveAudioBlob(key, b)).catch(() => {});
-                    } else {
-                        tryFallback(number, name);
-                    }
-                })
-                .catch(() => tryFallback(number, name));
+                    });
+                    return;
+                }
+            } catch (e) { /* fall through to fallback */ }
+            tryFallback(number, name);
         }
 
         function tryFallback(number, name) {

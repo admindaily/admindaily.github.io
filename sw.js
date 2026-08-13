@@ -1,6 +1,6 @@
-const CACHE_NAME = 'quranhub-shell-v3';
-const DATA_CACHE = 'quranhub-data-v3';
-const AUDIO_CACHE = 'quranhub-audio-v3';
+const CACHE_NAME = 'quranhub-shell-v4';
+const DATA_CACHE = 'quranhub-data-v4';
+const AUDIO_CACHE = 'quranhub-audio-v4';
 
 const PRECACHE_URLS = ['/', '/index.html'];
 
