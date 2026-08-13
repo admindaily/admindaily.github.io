@@ -2044,14 +2044,15 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderSurahs(surahs);
-            loadTheme();
-            updateModeButtons();
-            populateReciters();
-            loadBookmarks();
-            loadResume();
-            loadDailyHadith();
-            (adsbygoogle = window.adsbygoogle || []).push({});
+            const safe = (label, fn) => { try { fn(); } catch (e) { console.error('init ' + label + ' failed:', e); } };
+            safe('renderSurahs', () => renderSurahs(surahs));
+            safe('loadTheme', loadTheme);
+            safe('updateModeButtons', updateModeButtons);
+            safe('populateReciters', populateReciters);
+            safe('loadBookmarks', loadBookmarks);
+            safe('loadResume', loadResume);
+            safe('loadDailyHadith', loadDailyHadith);
+            try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
 
             const installPromptEl = document.getElementById('installPrompt');
             const installBtn = document.getElementById('installBtn');

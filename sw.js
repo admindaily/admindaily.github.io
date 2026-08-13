@@ -1,6 +1,6 @@
-const CACHE_NAME = 'quranhub-shell-v7';
-const DATA_CACHE = 'quranhub-data-v7';
-const AUDIO_CACHE = 'quranhub-audio-v7';
+const CACHE_NAME = 'quranhub-shell-v8';
+const DATA_CACHE = 'quranhub-data-v8';
+const AUDIO_CACHE = 'quranhub-audio-v8';
 
 const PRECACHE_URLS = ['/', '/index.html'];
 
@@ -63,37 +63,66 @@ async function staleWhileRevalidate(request, cacheName) {
   return cached || fetchPromise;
 }
 
+// Network-first for the app shell so new deployments appear immediately; fall
+// back to the cached copy only when offline. This prevents the SW from
+// endlessly serving a stale (and possibly broken) index.html.
+async function networkFirstShell(request) {
+  try {
+    const response = await fetch(request);
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, response.clone());
+    return response;
+  } catch (err) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    if (request.mode === 'navigate') {
+      const index = await caches.match('/index.html');
+      if (index) return index;
+    }
+    throw err;
+  }
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
 
-  if (url.origin === 'https://audio.qurancdn.com') {
-    event.respondWith(cacheFirst(request, AUDIO_CACHE));
-    return;
-  }
+  try {
+    if (url.origin === self.location.origin) {
+      event.respondWith(networkFirstShell(request));
+      return;
+    }
 
-  if (
-    url.origin === 'https://api.quran.com' ||
-    url.origin === 'https://ummahapi.com' ||
-    url.origin === 'https://api.islamic.app'
-  ) {
-    event.respondWith(networkFirst(request, DATA_CACHE));
-    return;
-  }
+    if (url.origin === 'https://audio.qurancdn.com') {
+      event.respondWith(cacheFirst(request, AUDIO_CACHE));
+      return;
+    }
 
-  if (
-    url.origin === self.location.origin ||
-    url.origin === 'https://fonts.googleapis.com' ||
-    url.origin === 'https://fonts.gstatic.com' ||
-    url.origin === 'https://cdnjs.cloudflare.com'
-  ) {
-    event.respondWith(staleWhileRevalidate(request, CACHE_NAME));
-    return;
-  }
+    if (
+      url.origin === 'https://api.quran.com' ||
+      url.origin === 'https://ummahapi.com' ||
+      url.origin === 'https://api.islamic.app'
+    ) {
+      event.respondWith(networkFirst(request, DATA_CACHE));
+      return;
+    }
 
-  event.respondWith(
-    fetch(request).catch(() => caches.match(request).then((r) => r || caches.match('/index.html')))
-  );
+    if (
+      url.origin === 'https://fonts.googleapis.com' ||
+      url.origin === 'https://fonts.gstatic.com' ||
+      url.origin === 'https://cdnjs.cloudflare.com'
+    ) {
+      event.respondWith(staleWhileRevalidate(request, CACHE_NAME));
+      return;
+    }
+
+    event.respondWith(
+      fetch(request).catch(() => caches.match(request).then((r) => r || caches.match('/index.html')))
+    );
+  } catch (e) {
+    // Never let the SW throw and break the page.
+    event.respondWith(fetch(request));
+  }
 });
