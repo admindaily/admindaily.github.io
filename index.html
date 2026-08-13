@@ -1235,22 +1235,48 @@
             window.open('https://www.mp3quran.net/ar/abdulrahman_al_sudais/', '_blank');
         }
 
+        // Built-in authentic hadiths so the "Hadith of the Day" always loads,
+        // even when the live API is unreachable (offline, blocked, etc.).
+        const DAILY_HADITHS = [
+            { arabic: "إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى", english: "Narrated Umar ibn Al-Khattab: I heard the Messenger of Allah (ﷺ) say: 'Actions are but by intention, and every person will have only what they intended.'", narrator: "Umar ibn Al-Khattab", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ", english: "Narrated Abu Hurairah: The Messenger of Allah (ﷺ) said: 'Whoever believes in Allah and the Last Day, let him speak good or remain silent.'", narrator: "Abu Hurairah", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ", english: "Narrated Anas ibn Malik: The Messenger of Allah (ﷺ) said: 'None of you truly believes until he loves for his brother what he loves for himself.'", narrator: "Anas ibn Malik", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "الدِّينُ النَّصِيحَةُ", english: "Narrated Tamim ad-Dari: The Messenger of Allah (ﷺ) said: 'Religion is sincerity (naseeha).'", narrator: "Tamim ad-Dari", collection: "Sahih Muslim", grade: "Sahih" },
+            { arabic: "لَيْسَ الشَّدِيدُ بِالصُّرَعَةِ، إِنَّ الشَّدِيدَ الَّذِي يَمْلِكُ نَفْسَهُ عِنْدَ الْغَضَبِ", english: "Narrated Abu Hurairah: The Messenger of Allah (ﷺ) said: 'The strong is not the one who overcomes people by his strength, but the strong is the one who controls himself while in anger.'", narrator: "Abu Hurairah", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "لَا يَرْحَمُ اللَّهُ مَنْ لَا يَرْحَمُ النَّاسَ", english: "Narrated Abdullah ibn Amr: The Messenger of Allah (ﷺ) said: 'He who does not show mercy to people, Allah will not show mercy to him.'", narrator: "Abdullah ibn Amr", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "إِنَّ اللَّهَ تَعَالَى جَمِيلٌ يُحِبُّ الْجَمَالَ", english: "Narrated Abdullah ibn Mas'ud: The Messenger of Allah (ﷺ) said: 'Indeed, Allah is Beautiful and He loves beauty.'", narrator: "Abdullah ibn Mas'ud", collection: "Sahih Muslim", grade: "Sahih" },
+            { arabic: "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ", english: "Narrated Abu Hurairah: The Messenger of Allah (ﷺ) said: 'Whoever travels a path seeking knowledge, Allah will make easy for him a path to Paradise.'", narrator: "Abu Hurairah", collection: "Sunan Abu Dawud", grade: "Sahih" },
+            { arabic: "الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ", english: "Narrated Abdullah ibn Amr: The Messenger of Allah (ﷺ) said: 'The Muslim is the one from whose tongue and hand the Muslims are safe.'", narrator: "Abdullah ibn Amr", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ", english: "Narrated Abdullah ibn Mas'ud: The Messenger of Allah (ﷺ) said: 'Charity does not decrease wealth.'", narrator: "Abdullah ibn Mas'ud", collection: "Sahih Muslim", grade: "Sahih" },
+            { arabic: "يَسِّرُوا وَلَا تُعَسِّرُوا، وَبَشِّرُوا وَلَا تُنَفِّرُوا", english: "Narrated Anas ibn Malik: The Messenger of Allah (ﷺ) said: 'Make things easy and do not make them difficult; give glad tidings and do not repel people.'", narrator: "Anas ibn Malik", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ", english: "Narrated Uthman ibn Affan: The Messenger of Allah (ﷺ) said: 'The best of you are those who learn the Quran and teach it.'", narrator: "Uthman ibn Affan", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "الْحَيَاءُ مِنَ الْإِيمَانِ", english: "Narrated Abdullah ibn Umar: The Messenger of Allah (ﷺ) said: 'Modesty is a part of faith.'", narrator: "Abdullah ibn Umar", collection: "Sahih al-Bukhari", grade: "Sahih" },
+            { arabic: "الطُّهُورُ شَطْرُ الْإِيمَانِ", english: "Narrated Abu Malik al-Ash'ari: The Messenger of Allah (ﷺ) said: 'Cleanliness is half of faith.'", narrator: "Abu Malik al-Ash'ari", collection: "Sahih Muslim", grade: "Sahih" },
+            { arabic: "إِنَّ اللَّهَ لَا يَنْظُرُ إِلَى صُوَرِكُمْ وَلَا إِلَى أَمْوَالِكُمْ وَلَكِنْ يَنْظُرُ إِلَى قُلُوبِكُمْ وَأَعْمَالِكُمْ", english: "Narrated Abu Hurairah: The Messenger of Allah (ﷺ) said: 'Indeed, Allah does not look at your appearance or your wealth, but He looks at your hearts and your deeds.'", narrator: "Abu Hurairah", collection: "Sahih Muslim", grade: "Sahih" },
+            { arabic: "مَنْ كَانَ فِي حَاجَةِ أَخِيهِ كَانَ اللَّهُ فِي حَاجَتِهِ", english: "Narrated Abdullah ibn Abbas: The Messenger of Allah (ﷺ) said: 'Whoever is concerned with the need of his brother, Allah will be concerned with his need.'", narrator: "Abdullah ibn Abbas", collection: "Sahih al-Bukhari", grade: "Sahih" }
+        ];
+
         function loadDailyHadith() {
             const target = document.getElementById('dailyHadithContent');
             if (!target) return;
-            const errorMsg = '<p style="color:var(--text-secondary);">Unable to load daily hadith. Please try again later.</p>';
 
             function render(hadith) {
-                const narratorMatch = hadith.english && hadith.english.match(/Narrated ([^:]+):/);
-                const narrator = narratorMatch ? narratorMatch[1].trim() : 'Unknown';
-                const text = hadith.english ? hadith.english.replace(/Narrated [^:]+: /, '') : (hadith.arabic || '');
+                const narrator = (hadith.narrator) ||
+                    (hadith.english && hadith.english.match(/Narrated ([^:]+):/)
+                        ? hadith.english.match(/Narrated ([^:]+):/)[1].trim()
+                        : 'Unknown');
+                const text = hadith.english
+                    ? hadith.english.replace(/Narrated [^:]+: /, '')
+                    : (hadith.arabic || '');
                 const gradeColor = hadith.grade === 'Sahih' ? '#2e7d32' : hadith.grade === 'Hasan' ? '#f9a825' : '#c62828';
+                const ref = hadith.collection_name || hadith.collection || 'Hadith';
+                const numPart = hadith.hadithnumber ? ' #' + hadith.hadithnumber : '';
                 target.innerHTML = `
                     <div style="margin-bottom:10px;color:var(--text-secondary);font-size:0.9rem;"><strong>Narrator:</strong> ${narrator}</div>
                     <div class="arabic-text" style="text-align:right;margin-bottom:10px;font-size:1.1rem;">${hadith.arabic || ''}</div>
                     <div style="color:var(--text-primary);line-height:1.7;margin-bottom:10px;">${text}</div>
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">
-                        <span style="color:var(--accent);font-size:0.85rem;">${hadith.collection_name || hadith.collection || 'Hadith'} #${hadith.hadithnumber}</span>
+                        <span style="color:var(--accent);font-size:0.85rem;">${ref}${numPart}</span>
                         <span style="background:${gradeColor};color:#fff;padding:2px 10px;border-radius:12px;font-size:0.8rem;font-weight:600;">${hadith.grade || ''}</span>
                     </div>
                     <p style="margin-top:10px;color:var(--text-secondary);font-size:0.85rem;"><em>Tap "Hadith" on any surah to explore more</em></p>`;
@@ -1258,38 +1284,39 @@
 
             const today = new Date();
             const dayKey = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+            const startOfYear = new Date(today.getFullYear(), 0, 0);
+            const dayOfYear = Math.floor((today - startOfYear) / 86400000);
 
-            function fetchAndRender() {
-                // Bukhari uses sequential hadith numbers (1..~7563), so a date-based
-                // index is guaranteed valid. This makes the hadith stable for the whole
-                // day and changes automatically every day.
-                const startOfYear = new Date(today.getFullYear(), 0, 0);
-                const dayOfYear = Math.floor((today - startOfYear) / 86400000);
+            // Deterministic pick for the day (stable all day, changes daily).
+            const local = DAILY_HADITHS[dayOfYear % DAILY_HADITHS.length];
+
+            function showLocal() { render(local); }
+
+            // Show a previously fetched live hadith for today, if cached.
+            let cached = null;
+            try { cached = JSON.parse(localStorage.getItem('dailyHadith') || 'null'); } catch (e) {}
+            if (cached && cached.date === dayKey && cached.hadith) {
+                render(cached.hadith);
+            } else {
+                // Instantly show the built-in hadith so it always loads, then try to
+                // upgrade to a live one in the background.
+                showLocal();
+
                 const num = (dayOfYear % 7500) + 1;
-                fetch(`${HADITH_API}/bukhari/${num}`)
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 6000);
+                fetch(`${HADITH_API}/bukhari/${num}`, { signal: controller.signal })
                     .then(r => r.ok ? r.json() : Promise.reject(r.status))
                     .then(data => {
+                        clearTimeout(timer);
                         if (data.success && data.data && data.data.english) {
                             try {
                                 localStorage.setItem('dailyHadith', JSON.stringify({ date: dayKey, hadith: data.data }));
                             } catch (e) {}
                             render(data.data);
-                        } else {
-                            target.innerHTML = errorMsg;
                         }
                     })
-                    .catch(() => { target.innerHTML = errorMsg; });
-            }
-
-            // Serve today's hadith instantly from cache; otherwise fetch it.
-            let cached = null;
-            try {
-                cached = JSON.parse(localStorage.getItem('dailyHadith') || 'null');
-            } catch (e) {}
-            if (cached && cached.date === dayKey && cached.hadith) {
-                render(cached.hadith);
-            } else {
-                fetchAndRender();
+                    .catch(() => { /* keep showing the built-in hadith */ });
             }
 
             // Auto-load the new hadith if the day changes while the app stays open.
@@ -1298,9 +1325,7 @@
                 setInterval(() => {
                     const now = new Date();
                     const nowKey = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
-                    if (nowKey !== dayKey) {
-                        loadDailyHadith();
-                    }
+                    if (nowKey !== dayKey) loadDailyHadith();
                 }, 60 * 60 * 1000);
             }
         }
