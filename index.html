@@ -57,7 +57,6 @@
     }
     </script>
     
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9651439714273887" crossorigin="anonymous"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -414,16 +413,7 @@
             <div id="dailyHadithContent"><p style="color:var(--text-secondary);text-align:center;">Loading daily hadith...</p></div>
         </section>
 
-        <div class="ad-container">
-            <div class="ad-banner">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-9651439714273887"
-                     data-ad-slot="YOUR_AD_SLOT_1"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-            </div>
-        </div>
+
 
         <div style="max-width:600px;margin:0 auto 20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
             <button class="action-btn" onclick="filterByType('all')" id="filterAll" style="flex:1;min-width:120px;padding:12px;background:var(--primary);color:var(--text-primary);">
@@ -441,14 +431,7 @@
             <input type="text" class="search-input" id="searchInput" placeholder="Search surahs by name..." oninput="searchSurahs(this.value)">
         </div>
 
-        <div class="ad-container">
-            <ins class="adsbygoogle"
-                 style="display:block"
-                 data-ad-client="ca-pub-9651439714273887"
-                 data-ad-slot="YOUR_AD_SLOT_2"
-                 data-ad-format="horizontal"
-                 data-full-width-responsive="true"></ins>
-        </div>
+
 
         <div class="surah-grid" id="surahGrid"></div>
     </main>
@@ -494,14 +477,7 @@
     </div>
     <audio id="audioPlayer" onended="onAudioEnded()" ontimeupdate="updateProgress()" onloadedmetadata="updateDuration()" onerror="audioError()"></audio>
 
-    <div class="ad-container">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-9651439714273887"
-             data-ad-slot="YOUR_AD_SLOT_3"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-    </div>
+
 
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
@@ -510,14 +486,7 @@
                 <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" id="modalBody"></div>
-            <div style="padding: 0 20px 20px;">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-9651439714273887"
-                     data-ad-slot="YOUR_AD_SLOT_4"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-            </div>
+            <div style="padding: 0 20px 20px;"></div>
         </div>
     </div>
 
@@ -538,6 +507,24 @@
     </footer>
 
     <script>
+        (function () {
+            function showFatal(msg) {
+                var el = document.getElementById('qhFatal');
+                if (!el) {
+                    el = document.createElement('div');
+                    el.id = 'qhFatal';
+                    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#c62828;color:#fff;padding:10px 14px;font:600 13px/1.4 monospace;white-space:pre-wrap;';
+                    (document.body || document.documentElement).appendChild(el);
+                }
+                el.textContent = 'Error: ' + msg;
+            }
+            window.addEventListener('error', function (e) {
+                showFatal((e.message || 'error') + (e.filename ? ' @ ' + e.filename + ':' + e.lineno : ''));
+            });
+            window.addEventListener('unhandledrejection', function (e) {
+                var r = e.reason; showFatal('Promise rejected: ' + (r && r.message ? r.message : r));
+            });
+        })();
         const surahs = [
             { number: 1, name: "Al-Fatiha", nameArabic: "الفاتحة", meaning: "The Opening", type: "Meccan", verses: 7 },
             { number: 2, name: "Al-Baqarah", nameArabic: "البقرة", meaning: "The Cow", type: "Medinan", verses: 286 },
@@ -675,13 +662,20 @@
             { id: 5, name: 'Hani ar-Rifai' }
         ];
 
-        let currentReciterId = parseInt(localStorage.getItem('quranhub_reciter'), 10) || 3;
+        let currentReciterId = 3;
+        try { currentReciterId = parseInt(localStorage.getItem('quranhub_reciter'), 10) || 3; } catch (e) {}
         let currentReciterName = (RECITERS.find(r => r.id === currentReciterId) || RECITERS[0]).name;
 
         function safeLocalJSON(key, fallback) {
-            const raw = localStorage.getItem(key);
-            if (raw === null) return fallback;
-            try { return JSON.parse(raw); } catch { return fallback; }
+            try {
+                const raw = localStorage.getItem(key);
+                if (raw === null) return fallback;
+                return JSON.parse(raw);
+            } catch { return fallback; }
+        }
+
+        function safeLocalSet(key, value) {
+            try { localStorage.setItem(key, value); } catch (e) {}
         }
 
         const PDF_BASE = 'https://surahquran.com/surah-pdf/pdf';
@@ -765,7 +759,6 @@
             document.getElementById('modalTitle').textContent = title; 
             document.getElementById('modalBody').innerHTML = content; 
             document.getElementById('modalOverlay').classList.add('active'); 
-            (adsbygoogle = window.adsbygoogle || []).push({});
         }
         function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
         document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
@@ -2075,7 +2068,6 @@
             safe('loadResume', loadResume);
             safe('loadDailyHadith', loadDailyHadith);
             safe('cleanupOversizedAudio', cleanupOversizedAudio);
-            try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
 
             const installPromptEl = document.getElementById('installPrompt');
             const installBtn = document.getElementById('installBtn');
