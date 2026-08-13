@@ -1455,24 +1455,18 @@
                 loadAndPlay(currentObjectUrl, () => tryFallback(number, name));
                 return;
             }
-            // Not cached for this reciter: download THIS reciter's audio, cache it,
-            // and play from the blob. This guarantees the selected reciter is what
-            // you hear (and it's now saved for offline), instead of silently
-            // falling back to a different reciter on a slow connection.
+            // Not cached for this reciter: stream THIS reciter's audio directly so
+            // playback starts immediately (these files are 100MB+), and cache a copy
+            // in the background for offline use. This guarantees you hear the
+            // selected reciter instead of silently falling back to a different one.
             try {
                 const r = await fetch(`${AUDIO_API}/${reciterId}/${number}?language=en`);
                 const data = await r.json();
                 const url = data && data.audio_file && data.audio_file.audio_url;
                 if (url) {
-                    const resp = await fetch(url);
-                    const b = await resp.blob();
-                    try { await saveAudioBlob(key, b); } catch (e) {}
-                    if (currentObjectUrl) { try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {} }
-                    currentObjectUrl = URL.createObjectURL(b);
-                    loadAndPlay(currentObjectUrl, () => {
-                        // Blob playback failed: try the direct URL once before giving up.
-                        loadAndPlay(url, () => tryFallback(number, name));
-                    });
+                    loadAndPlay(url, () => tryFallback(number, name));
+                    // Background offline cache (non-blocking); ignore failures.
+                    fetch(url).then(res => res.blob()).then(b => saveAudioBlob(key, b)).catch(() => {});
                     return;
                 }
             } catch (e) { /* fall through to fallback */ }
@@ -1895,7 +1889,10 @@
             if (hasAudio) {
                 playSurah(number, name);
             } else {
-                await downloadSurahInBackground(number, name);
+                // Start the offline download for the current reciter in the
+                // background (non-blocking — these files are 100MB+) and play
+                // immediately via streaming.
+                downloadSurahInBackground(number, name).catch(() => {});
                 playSurah(number, name);
             }
         }
