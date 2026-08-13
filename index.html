@@ -1016,7 +1016,7 @@
                 </div>`;
             const page = document.getElementById('visualQuranPage');
             document.getElementById('vqTitle').textContent = `Surah ${surah.name}`;
-            document.getElementById('vqBody').innerHTML = intro + '<div id="visContent" style="margin-top:20px;text-align:right;font-family:var(--arabic-font);"></div>';
+            document.getElementById('vqBody').innerHTML = intro + '<div id="visContent" style="margin-top:20px;direction:rtl;text-align:right;font-family:var(--arabic-font);"></div>';
             page.classList.add('active');
             page.scrollTop = 0;
             const loader = document.getElementById('visContent');
@@ -1032,9 +1032,9 @@
                     verses.forEach(v => {
                         const vn = v.vn;
                         const txt = v.text;
-                        html += `<span class="vis-ayah" data-vkey="${v.vkey}" onclick="playVerse(${number}, ${vn})" title="Tap to play this verse"><span class="ayah-num" style="font-size:0.6em;vertical-align:super;color:var(--accent);margin-left:2px;">${vn}</span> ${txt}</span> `;
+                        html += `<span class="vis-ayah" data-vkey="${v.vkey}" onclick="playVerse(${number}, ${vn})" title="Tap to play this verse">${txt} <span class="ayah-num" dir="ltr" style="font-size:0.6em;vertical-align:super;color:var(--accent);margin-left:4px;">${vn}</span></span> `;
                     });
-                    loader.innerHTML = '<div style="max-width:1000px;margin:0 auto;text-align:right;line-height:2.4;font-size:2rem;font-weight:normal;font-family:var(--arabic-font);">' + html + '</div>';
+                    loader.innerHTML = '<div style="max-width:1000px;margin:0 auto;direction:rtl;text-align:right;line-height:2.4;font-size:2rem;font-weight:normal;font-family:var(--arabic-font);">' + html + '</div>';
                 })
                 .catch(err => {
                     console.log('Visual Quran fetch error:', err);
