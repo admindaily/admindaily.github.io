@@ -1256,14 +1256,24 @@
                     <p style="margin-top:10px;color:var(--text-secondary);font-size:0.85rem;"><em>Tap "Hadith" on any surah to explore more</em></p>`;
             }
 
-            function attempt(col, num, retry) {
-                fetch(`${HADITH_API}/${col}/${num}`)
+            const today = new Date();
+            const dayKey = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+
+            function fetchAndRender() {
+                // Bukhari uses sequential hadith numbers (1..~7563), so a date-based
+                // index is guaranteed valid. This makes the hadith stable for the whole
+                // day and changes automatically every day.
+                const startOfYear = new Date(today.getFullYear(), 0, 0);
+                const dayOfYear = Math.floor((today - startOfYear) / 86400000);
+                const num = (dayOfYear % 7500) + 1;
+                fetch(`${HADITH_API}/bukhari/${num}`)
                     .then(r => r.ok ? r.json() : Promise.reject(r.status))
                     .then(data => {
                         if (data.success && data.data && data.data.english) {
+                            try {
+                                localStorage.setItem('dailyHadith', JSON.stringify({ date: dayKey, hadith: data.data }));
+                            } catch (e) {}
                             render(data.data);
-                        } else if (!retry) {
-                            attempt(col, 1, true);
                         } else {
                             target.innerHTML = errorMsg;
                         }
@@ -1271,10 +1281,28 @@
                     .catch(() => { target.innerHTML = errorMsg; });
             }
 
-            const collections = ['bukhari', 'muslim', 'abudawud'];
-            const col = collections[Math.floor(Math.random() * collections.length)];
-            const num = Math.floor(Math.random() * 100) + 1;
-            attempt(col, num, false);
+            // Serve today's hadith instantly from cache; otherwise fetch it.
+            let cached = null;
+            try {
+                cached = JSON.parse(localStorage.getItem('dailyHadith') || 'null');
+            } catch (e) {}
+            if (cached && cached.date === dayKey && cached.hadith) {
+                render(cached.hadith);
+            } else {
+                fetchAndRender();
+            }
+
+            // Auto-load the new hadith if the day changes while the app stays open.
+            if (!window.__dailyHadithWatcher) {
+                window.__dailyHadithWatcher = true;
+                setInterval(() => {
+                    const now = new Date();
+                    const nowKey = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+                    if (nowKey !== dayKey) {
+                        loadDailyHadith();
+                    }
+                }, 60 * 60 * 1000);
+            }
         }
 
         function downloadFullQuranText() {
