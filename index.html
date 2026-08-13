@@ -1570,6 +1570,28 @@
             } catch (e) { return null; }
         }
 
+        // Remove any oversized audio blobs left over from earlier versions (which
+        // could cache 100-220MB files and exhaust memory). Keeps storage safe.
+        async function cleanupOversizedAudio() {
+            try {
+                const db = await openAudioDB();
+                await new Promise((resolve) => {
+                    const tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(AUDIO_STORE_NAME);
+                    const req = store.openCursor();
+                    req.onsuccess = () => {
+                        const cursor = req.result;
+                        if (cursor) {
+                            const val = cursor.value;
+                            if (val && val.size && val.size > 70 * 1024 * 1024) cursor.delete();
+                            cursor.continue();
+                        } else { resolve(); }
+                    };
+                    req.onerror = () => resolve();
+                });
+            } catch (e) { /* ignore */ }
+        }
+
         const verseAudioCache = {};
         let verseQueue = [];
         let verseQueueIdx = -1;
@@ -2052,6 +2074,7 @@
             safe('loadBookmarks', loadBookmarks);
             safe('loadResume', loadResume);
             safe('loadDailyHadith', loadDailyHadith);
+            safe('cleanupOversizedAudio', cleanupOversizedAudio);
             try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
 
             const installPromptEl = document.getElementById('installPrompt');
