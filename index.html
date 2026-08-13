@@ -1445,66 +1445,69 @@
             loadReciterAudio(currentReciterId, number, name);
         }
 
+        function playFromBlob(blob) {
+            if (currentObjectUrl) { try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {} }
+            currentObjectUrl = URL.createObjectURL(blob);
+            loadAndPlay(currentObjectUrl, () => showAudioError('Unable to play ' + currentReciterName + ' audio.'));
+        }
+
         async function loadReciterAudio(reciterId, number, name) {
             const key = reciterId + ':' + number;
             let blob = null;
             try { blob = await getAudioBlob(key); } catch (e) { blob = null; }
-            if (blob) {
-                if (currentObjectUrl) { try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {} }
-                currentObjectUrl = URL.createObjectURL(blob);
-                loadAndPlay(currentObjectUrl, () => tryFallback(number, name));
-                return;
-            }
+            if (blob) { playFromBlob(blob); return; }
+
             // Not cached for this reciter: stream THIS reciter's audio directly so
-            // playback starts immediately (these files are 100MB+), and cache a copy
-            // in the background for offline use. This guarantees you hear the
-            // selected reciter instead of silently falling back to a different one.
+            // playback starts immediately (these files are 100MB+). We never
+            // silently switch to a different reciter. If streaming fails, we fetch
+            // the file and play it from a blob (recovery for environments where
+            // cross-origin streaming is blocked), then cache it for offline.
             try {
                 const r = await fetch(`${AUDIO_API}/${reciterId}/${number}?language=en`);
                 const data = await r.json();
                 const url = data && data.audio_file && data.audio_file.audio_url;
                 if (url) {
-                    loadAndPlay(url, () => tryFallback(number, name));
+                    document.getElementById('audioPlayerSubtitle').textContent = currentReciterName;
+                    loadAndPlay(url, () => {
+                        fetch(url).then(res => res.blob()).then(b => {
+                            try { saveAudioBlob(key, b); } catch (e) {}
+                            playFromBlob(b);
+                        }).catch(() => showAudioError('Unable to load ' + currentReciterName + ' audio.'));
+                    });
                     // Background offline cache (non-blocking); ignore failures.
                     fetch(url).then(res => res.blob()).then(b => saveAudioBlob(key, b)).catch(() => {});
                     return;
                 }
-            } catch (e) { /* fall through to fallback */ }
-            tryFallback(number, name);
-        }
-
-        function tryFallback(number, name) {
-            if (audioTriedFallback) { showAudioError('Unable to load audio. Try again later.'); return; }
-            audioTriedFallback = true;
-            document.getElementById('audioPlayerSubtitle').textContent = 'Al-Sudais (fallback)';
-            const padded = number.toString().padStart(3, '0');
-            loadAndPlay(`https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/${padded}.mp3`, () => showAudioError('Unable to load audio. Try again later.'));
+            } catch (e) { /* fall through to error */ }
+            showAudioError('Unable to load ' + currentReciterName + ' audio.');
         }
 
         function loadAndPlay(url, onFail) {
-            const onCanPlay = () => {
+            let settled = false;
+            const cleanup = () => {
                 audioPlayer.removeEventListener('canplay', onCanPlay);
                 audioPlayer.removeEventListener('error', onError);
-                clearTimeout(timeout);
+                clearTimeout(timer);
+            };
+            const onCanPlay = () => {
+                if (settled) return;
+                settled = true; cleanup();
                 const p = audioPlayer.play();
-                if (p) {
-                    p.then(() => { isPlaying = true; setPlayIcon(true); updateEqualizer(); })
-                     .catch(() => {});
-                }
+                if (p) p.then(() => { isPlaying = true; setPlayIcon(true); updateEqualizer(); }).catch(() => {});
             };
             const onError = () => {
-                audioPlayer.removeEventListener('canplay', onCanPlay);
-                audioPlayer.removeEventListener('error', onError);
-                clearTimeout(timeout);
+                if (settled) return;
+                settled = true; cleanup();
                 if (onFail) onFail();
             };
-            const timeout = setTimeout(() => {
-                audioPlayer.removeEventListener('canplay', onCanPlay);
-                audioPlayer.removeEventListener('error', onError);
+            // Generous timeout: large files can take a while to become playable.
+            const timer = setTimeout(() => {
+                if (settled) return;
+                settled = true; cleanup();
                 if (onFail) onFail();
-            }, 15000);
-            audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
-            audioPlayer.addEventListener('error', onError, { once: true });
+            }, 45000);
+            audioPlayer.addEventListener('canplay', onCanPlay);
+            audioPlayer.addEventListener('error', onError);
             audioPlayer.src = url;
             audioPlayer.load();
         }
