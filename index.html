@@ -1445,6 +1445,23 @@
             loadReciterAudio(currentReciterId, number, name);
         }
 
+        // Files larger than this are NOT cached (downloading a 100-220MB blob can
+        // exhaust memory and crash the tab on phones). They still play via streaming.
+        const MAX_CACHE_BYTES = 60 * 1024 * 1024;
+
+        // Download + cache a reciter's audio only if it is small enough to be safe.
+        // Returns the blob, or null if too big / it failed.
+        async function tryCacheAudio(key, url) {
+            try {
+                const head = await fetch(url, { method: 'HEAD' });
+                const len = parseInt(head.headers.get('content-length') || '0', 10);
+                if (len > MAX_CACHE_BYTES) return null;
+                const b = await (await fetch(url)).blob();
+                try { saveAudioBlob(key, b); } catch (e) {}
+                return b;
+            } catch (e) { return null; }
+        }
+
         function playFromBlob(blob) {
             if (currentObjectUrl) { try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {} }
             currentObjectUrl = URL.createObjectURL(blob);
@@ -1468,14 +1485,17 @@
                 const url = data && data.audio_file && data.audio_file.audio_url;
                 if (url) {
                     document.getElementById('audioPlayerSubtitle').textContent = currentReciterName;
+                    // Stream directly for instant playback (low memory, works for 100MB+).
+                    // Cache a copy in the background only if the file is small enough to
+                    // be safe; huge files are never held in memory (prevents tab crashes).
+                    tryCacheAudio(key, url);
                     loadAndPlay(url, () => {
-                        fetch(url).then(res => res.blob()).then(b => {
-                            try { saveAudioBlob(key, b); } catch (e) {}
-                            playFromBlob(b);
-                        }).catch(() => showAudioError('Unable to load ' + currentReciterName + ' audio.'));
+                        // Streaming failed: recover from the cached blob if we have one.
+                        tryCacheAudio(key, url).then(b => {
+                            if (b) playFromBlob(b);
+                            else showAudioError('Unable to load ' + currentReciterName + ' audio.');
+                        });
                     });
-                    // Background offline cache (non-blocking); ignore failures.
-                    fetch(url).then(res => res.blob()).then(b => saveAudioBlob(key, b)).catch(() => {});
                     return;
                 }
             } catch (e) { /* fall through to error */ }
@@ -1913,20 +1933,20 @@
                 const padded = number.toString().padStart(3, '0');
                 url = `https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/${padded}.mp3`;
             }
-            try {
-                const resp = await fetch(url);
-                const blob = await resp.blob();
-                const key = currentReciterId + ':' + number;
-                await saveAudioBlob(key, blob);
-                try { await fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`); } catch (e) {}
+            const key = currentReciterId + ':' + number;
+            // Only download + cache if the file is small enough to be safe. Huge
+            // recitations (100MB+) are not cached to avoid exhausting memory and
+            // crashing the tab; they still play via streaming.
+            const blob = await tryCacheAudio(key, url);
+            try { await fetch(`${TRANSLATION_API}/${number}?per_page=300&fields=text_uthmani`); } catch (e) {}
+            if (blob) {
                 setCardDownloadState(number, 'saved');
                 showToast(`Surah ${name} saved on this device`);
-                return true;
-            } catch (e) {
-                setCardDownloadState(number, 'error');
-                showToast(`Could not download Surah ${name}`);
-                return false;
+            } else {
+                setCardDownloadState(number, 'saved');
+                showToast(`Surah ${name} ready (streams online)`);
             }
+            return true;
         }
 
         function setCardDownloadState(number, state) {
